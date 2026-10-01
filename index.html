@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Agendamento Web</title>
+  <!-- SDK Oficial do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f4f5f7; color: #333; display: flex; justify-content: center; }
+    .mobile-card { width: 100%; max-width: 480px; min-height: 100vh; background: #ffffff; padding: 20px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+    .header { border-bottom: 1px solid #eee; padding-bottom: 15px; }
+    .header h1 { font-size: 1.4rem; color: #111; }
+    .header p { font-size: 0.85rem; color: #666; margin-top: 4px; }
+    .section-title { font-size: 1rem; font-weight: 600; color: #444; margin-bottom: 10px; }
+    .item-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
+    .item-card.selected { border-color: #0066ff; background-color: #f0f6ff; }
+    .item-title { font-weight: 600; font-size: 0.95rem; }
+    .item-sub { font-size: 0.85rem; color: #666; margin-top: 4px; }
+    .btn { background: #0066ff; color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; cursor: pointer; margin-top: auto; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .input-field { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem; }
+    #loading { text-align: center; padding: 40px; color: #666; }
+  </style>
+</head>
+<body>
+
+  <div class="mobile-card">
+    <!-- Estado de Carregamento -->
+    <div id="loading">Carregando informações da empresa...</div>
+
+    <!-- Conteúdo do Portal -->
+    <div id="app" style="display: none; flex-direction: column; gap: 20px; height: 100%;">
+      <div class="header">
+        <h1 id="tenant-name">Carregando...</h1>
+        <p id="tenant-address"></p>
+        <p id="tenant-phone"></p>
+      </div>
+
+      <!-- Passo 1: Serviços -->
+      <div>
+        <div class="section-title">1. Escolha o Serviço</div>
+        <div id="services-list"></div>
+      </div>
+
+      <!-- Passo 2: Colaborador -->
+      <div>
+        <div class="section-title">2. Escolha o Profissional</div>
+        <div id="collaborators-list"></div>
+      </div>
+
+      <!-- Passo 3: Dados do Cliente -->
+      <div>
+        <div class="section-title">3. Seus Dados</div>
+        <input type="text" id="client-name" class="input-field" placeholder="Seu Nome Completo">
+        <input type="tel" id="client-phone" class="input-field" placeholder="Seu WhatsApp (Ex: 11999999999)">
+      </div>
+
+      <button id="btn-agendar" class="btn" onclick="finalizarAgendamento()">Finalizar Agendamento</button>
+    </div>
+  </div>
+
+  <script>
+    // CREDENCIAIS DO SUPABASE
+    const SUPABASE_URL = 'https://oxusmmhkpesuubyyyyhx.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_FVx2K9soCfJ_hczEuGRsOg_jjbqt4ds';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentTenant = null;
+    let selectedService = null;
+    let selectedCollaborator = null;
+
+    // Detectar o Slug da URL (ex: /barbearia-teste)
+    function getSlugFromUrl() {
+      const path = window.location.pathname.replace(/^\/|\/$/g, '');
+      return path || 'barbearia-teste'; // Fallback para o teste caso esteja na raiz
+    }
+
+    async function init() {
+      const slug = getSlugFromUrl();
+      
+      // 1. Buscar a Empresa
+      const { data: tenants, error: tenantErr } = await _supabase
+        .from('tenants')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (tenantErr || !tenants) {
+        document.getElementById('loading').innerText = 'Empresa não encontrada ou link inválido.';
+        return;
+      }
+
+      currentTenant = tenants;
+      document.getElementById('tenant-name').innerText = currentTenant.name;
+      document.getElementById('tenant-address').innerText = currentTenant.address || '';
+      document.getElementById('tenant-phone').innerText = currentTenant.phone ? 'Tel: ' + currentTenant.phone : '';
+
+      // 2. Carregar Serviços
+      const { data: services } = await _supabase
+        .from('services')
+        .select('*')
+        .eq('tenant_id', currentTenant.id);
+
+      renderServices(services || []);
+
+      // 3. Carregar Colaboradores
+      const { data: collaborators } = await _supabase
+        .from('collaborators')
+        .select('*')
+        .eq('tenant_id', currentTenant.id);
+
+      renderCollaborators(collaborators || []);
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    }
+
+    function renderServices(services) {
+      const container = document.getElementById('services-list');
+      if (services.length === 0) {
+        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Nenhum serviço cadastrado.</p>';
+        return;
+      }
+      container.innerHTML = services.map(s => `
+        <div class="item-card" onclick="selectService('${s.id}', ${s.price}, this)">
+          <div class="item-title">${s.name}</div>
+          <div class="item-sub">R$ ${s.price.toFixed(2)} • ${s.duration} min</div>
+        </div>
+      `).join('');
+    }
+
+    function renderCollaborators(collaborators) {
+      const container = document.getElementById('collaborators-list');
+      if (collaborators.length === 0) {
+        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Nenhum profissional disponível.</p>';
+        return;
+      }
+      container.innerHTML = collaborators.map(c => `
+        <div class="item-card" onclick="selectCollaborator('${c.id}', this)">
+          <div class="item-title">${c.name}</div>
+        </div>
+      `).join('');
+    }
+
+    function selectService(id, price, el) {
+      document.querySelectorAll('#services-list .item-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedService = { id, price };
+    }
+
+    function selectCollaborator(id, el) {
+      document.querySelectorAll('#collaborators-list .item-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedCollaborator = id;
+    }
+
+    async function finalizarAgendamento() {
+      const name = document.getElementById('client-name').value.trim();
+      const phone = document.getElementById('client-phone').value.trim();
+
+      if (!selectedService || !selectedCollaborator || !name || !phone) {
+        alert('Por favor, preencha todos os campos e selecione o serviço/profissional.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-agendar');
+      btn.disabled = true;
+      btn.innerText = 'Agendando...';
+
+      try {
+        // 1. Cadastrar/Obter Cliente
+        const { data: client, error: clientErr } = await _supabase
+          .from('clients')
+          .insert([{ tenant_id: currentTenant.id, name, phone }])
+          .select()
+          .single();
+
+        if (clientErr) throw clientErr;
+
+        // 2. Criar o Agendamento
+        const { error: apptErr } = await _supabase
+          .from('appointments')
+          .insert([{
+            tenant_id: currentTenant.id,
+            client_id: client.id,
+            service_id: selectedService.id,
+            collaborator_id: selectedCollaborator,
+            appointment_date: new Date().toISOString(),
+            status: 'pendente',
+            price: selectedService.price
+          }]);
+
+        if (apptErr) throw apptErr;
+
+        alert('Agendamento realizado com sucesso!');
+        location.reload();
+
+      } catch (err) {
+        alert('Erro ao agendar: ' + err.message);
+        btn.disabled = false;
+        btn.innerText = 'Finalizar Agendamento';
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
