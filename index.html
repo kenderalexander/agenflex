@@ -6,54 +6,111 @@
   <title>Agendamento Web</title>
   <!-- SDK Oficial do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Fonte Inter para visual moderno de App Native -->
+  <!-- Fonte Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* Variáveis de Tema (Light por Padrão) */
+    :root {
+      --bg-color: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --text-main: #0F172A;
+      --text-sub: #64748B;
+      --border-color: #E2E8F0;
+      --item-hover: #94A3B8;
+      --primary: #0066FF;
+      --primary-bg: #EFF6FF;
+      --summary-bg: #EFF6FF;
+      --summary-border: #BFDBFE;
+      --summary-text: #1E40AF;
+      --shadow: rgba(0, 0, 0, 0.03);
+    }
+
+    /* Tema Escuro (Ativado via Classe ou Configuração do Sistema) */
+    [data-theme="dark"] {
+      --bg-color: #0F172A;
+      --card-bg: #1E293B;
+      --text-main: #F8FAFC;
+      --text-sub: #94A3B8;
+      --border-color: #334155;
+      --item-hover: #475569;
+      --primary: #3B82F6;
+      --primary-bg: #1E3A8A;
+      --summary-bg: #172554;
+      --summary-border: #1E40AF;
+      --summary-text: #93C5FD;
+      --shadow: rgba(0, 0, 0, 0.2);
+    }
+
     * { 
       box-sizing: border-box; 
       margin: 0; 
       padding: 0; 
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
     }
+
     body { 
-      background-color: #F8FAFC; 
-      color: #0F172A; 
+      background-color: var(--bg-color); 
+      color: var(--text-main); 
       display: flex; 
       justify-content: center; 
       min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
     }
+
     .mobile-card { 
       width: 100%; 
       max-width: 480px; 
       min-height: 100vh; 
-      background: #F8FAFC; 
+      background: var(--bg-color); 
       padding: 20px; 
       display: flex; 
       flex-direction: column; 
       gap: 16px; 
       position: relative;
     }
-    
+
+    /* Topo com Botão de Tema */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .theme-toggle-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px var(--shadow);
+      transition: all 0.2s;
+    }
+
     /* Cabeçalho */
     .header { 
-      background: #FFFFFF;
+      background: var(--card-bg);
       border-radius: 16px;
       padding: 16px 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
-      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 6px -1px var(--shadow);
+      border: 1px solid var(--border-color);
     }
     .header h1 { 
       font-size: 1.25rem; 
       font-weight: 700;
-      color: #0F172A; 
+      color: var(--text-main); 
     }
     .header p { 
       font-size: 0.85rem; 
-      color: #64748B; 
+      color: var(--text-sub); 
       margin-top: 4px; 
     }
 
-    /* Barra de Progresso / Indicador de Passos */
+    /* Barra de Progresso (4 passos) */
     .step-indicator {
       display: flex;
       justify-content: space-between;
@@ -63,13 +120,13 @@
     .step-dot {
       flex: 1;
       height: 4px;
-      background: #E2E8F0;
+      background: var(--border-color);
       border-radius: 2px;
       margin: 0 3px;
       transition: background 0.3s;
     }
     .step-dot.active {
-      background: #0066FF;
+      background: var(--primary);
     }
 
     /* Container de cada Etapa */
@@ -89,38 +146,38 @@
     }
 
     .card-group {
-      background: #FFFFFF;
+      background: var(--card-bg);
       border-radius: 16px;
       padding: 18px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
-      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 6px -1px var(--shadow);
+      border: 1px solid var(--border-color);
     }
 
     .section-title { 
       font-size: 1rem; 
       font-weight: 700; 
-      color: #0F172A; 
+      color: var(--text-main); 
       margin-bottom: 14px; 
     }
 
     /* Items Selecionáveis */
     .item-card { 
-      border: 1.5px solid #E2E8F0; 
+      border: 1.5px solid var(--border-color); 
       border-radius: 12px; 
       padding: 14px; 
       margin-bottom: 10px; 
       cursor: pointer; 
       transition: all 0.2s ease; 
-      background: #FFFFFF;
+      background: var(--card-bg);
     }
     .item-card:last-child { margin-bottom: 0; }
     .item-card.selected { 
-      border-color: #0066FF; 
-      background-color: #EFF6FF; 
-      box-shadow: 0 0 0 1px #0066FF;
+      border-color: var(--primary); 
+      background-color: var(--primary-bg); 
+      box-shadow: 0 0 0 1px var(--primary);
     }
-    .item-title { font-weight: 600; font-size: 0.95rem; color: #0F172A; }
-    .item-sub { font-size: 0.85rem; color: #64748B; margin-top: 4px; }
+    .item-title { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
+    .item-sub { font-size: 0.85rem; color: var(--text-sub); margin-top: 4px; }
 
     /* Grade de Horários */
     .time-grid { 
@@ -130,21 +187,21 @@
       margin-top: 10px; 
     }
     .time-slot { 
-      border: 1.5px solid #E2E8F0; 
+      border: 1.5px solid var(--border-color); 
       padding: 12px 4px; 
       border-radius: 10px; 
       text-align: center; 
       cursor: pointer; 
       font-size: 0.875rem; 
       font-weight: 600;
-      color: #334155;
-      background: #FFFFFF;
+      color: var(--text-main);
+      background: var(--card-bg);
       transition: all 0.2s ease; 
     }
     .time-slot.selected { 
-      background: #0066FF; 
+      background: var(--primary); 
       color: #FFFFFF; 
-      border-color: #0066FF; 
+      border-color: var(--primary); 
       box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
     }
 
@@ -152,14 +209,15 @@
     .input-field { 
       width: 100%; 
       padding: 14px; 
-      border: 1.5px solid #E2E8F0; 
+      border: 1.5px solid var(--border-color); 
       border-radius: 12px; 
       margin-bottom: 12px; 
       font-size: 0.95rem; 
       outline: none;
-      background: #FFFFFF;
+      background: var(--card-bg);
+      color: var(--text-main);
     }
-    .input-field:focus { border-color: #0066FF; }
+    .input-field:focus { border-color: var(--primary); }
 
     /* Botões de Navegação */
     .nav-buttons {
@@ -170,7 +228,7 @@
     }
 
     .btn { 
-      background: #0066FF; 
+      background: var(--primary); 
       color: #FFFFFF; 
       border: none; 
       padding: 16px; 
@@ -182,11 +240,11 @@
       box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
       transition: all 0.2s;
     }
-    .btn:active { background: #0052CC; }
+    .btn:active { filter: brightness(0.9); }
     .btn-secondary {
-      background: #FFFFFF;
-      color: #475569;
-      border: 1.5px solid #CBD5E1;
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1.5px solid var(--border-color);
       box-shadow: none;
       width: 35%;
     }
@@ -194,7 +252,7 @@
     #loading { 
       text-align: center; 
       padding: 60px 20px; 
-      color: #64748B; 
+      color: var(--text-sub); 
       font-weight: 500;
     }
   </style>
@@ -206,7 +264,15 @@
 
     <div id="app" style="display: none; flex-direction: column; height: 100%; gap: 12px;">
       
-      <!-- Cabeçalho -->
+      <!-- Topo com Alternador de Tema -->
+      <div class="top-bar">
+        <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-sub);">AGENDAMENTO WEB</div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn">
+          🌙 Escuro
+        </button>
+      </div>
+
+      <!-- Cabeçalho da Empresa -->
       <div class="header">
         <h1 id="tenant-name">...</h1>
         <p id="tenant-info"></p>
@@ -254,8 +320,8 @@
         </div>
         
         <!-- Resumo do Agendamento -->
-        <div class="card-group" style="background: #EFF6FF; border-color: #BFDBFE;">
-          <div style="font-size:0.85rem; color:#1E40AF; line-height: 1.5;" id="summary-box"></div>
+        <div class="card-group" style="background: var(--summary-bg); border-color: var(--summary-border);">
+          <div style="font-size:0.85rem; color: var(--summary-text); line-height: 1.5;" id="summary-box"></div>
         </div>
       </div>
 
@@ -277,8 +343,35 @@
     let currentTenant = null;
     let allCollaborators = [];
     let selectedService = null;
-    let selectedCollaborator = null; // null = 'Qualquer um'
+    let selectedCollaborator = null;
     let selectedTime = null;
+
+    // Gerenciamento de Tema (Claro/Escuro)
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-btn').innerText = '☀️ Claro';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.getElementById('theme-btn').innerText = '🌙 Escuro';
+      }
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      if (currentTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        document.getElementById('theme-btn').innerText = '🌙 Escuro';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        document.getElementById('theme-btn').innerText = '☀️️ Claro';
+      }
+    }
 
     function getSlugFromUrl() {
       const path = window.location.pathname.replace(/^\/|\/$/g, '');
@@ -286,6 +379,7 @@
     }
 
     async function init() {
+      initTheme();
       const slug = getSlugFromUrl();
       const { data: tenants, error: tErr } = await _supabase.from('tenants').select('*').eq('slug', slug).single();
 
@@ -302,7 +396,6 @@
       if (currentTenant.phone) infoText += (infoText ? '  •  ' : '') + '📞 ' + currentTenant.phone;
       document.getElementById('tenant-info').innerText = infoText;
 
-      // Carregar Serviços e Colaboradores
       const { data: services } = await _supabase.from('services').select('*').eq('tenant_id', currentTenant.id);
       const { data: collaborators } = await _supabase.from('collaborators').select('*').eq('tenant_id', currentTenant.id);
 
@@ -322,7 +415,7 @@
     function renderServices(services) {
       const container = document.getElementById('services-list');
       if (services.length === 0) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Nenhum serviço disponível.</p>';
+        container.innerHTML = '<p style="font-size:0.85rem; color:var(--text-sub);">Nenhum serviço disponível.</p>';
         return;
       }
       container.innerHTML = services.map(s => `
@@ -336,7 +429,6 @@
     function renderCollaborators(collaborators) {
       const container = document.getElementById('collaborators-list');
       
-      // Opção "Tanto faz / Qualquer profissional"
       let html = `
         <div class="item-card selected" onclick="selectCollaborator(null, 'Tanto faz / Qualquer Profissional', this)">
           <div class="item-title">✨ Tanto faz / Qualquer um</div>
@@ -353,7 +445,6 @@
       }
 
       container.innerHTML = html;
-      // Define padrão como 'Qualquer um'
       selectedCollaborator = { id: null, name: 'Tanto faz / Qualquer Profissional' };
     }
 
@@ -387,9 +478,7 @@
       selectedTime = time;
     }
 
-    // Controle de Avanço/Recuo de Passos
     function changeStep(direction) {
-      // Validações antes de avançar
       if (direction === 1) {
         if (currentStep === 1 && !selectedService) {
           alert('Por favor, selecione um serviço para avançar.');
@@ -420,17 +509,14 @@
     }
 
     function updateUI() {
-      // Esconder/Mostrar páginas
       document.querySelectorAll('.step-page').forEach((page, idx) => {
         page.classList.toggle('active', idx + 1 === currentStep);
       });
 
-      // Atualizar Indicador Visual (Dots)
-      document.querySelectorAll('.step-dot').forEach((dot, idx) => {
+      document.querySelectorAll('.step-step-dot').forEach((dot, idx) => {
         dot.classList.toggle('active', idx + 1 <= currentStep);
       });
 
-      // Atualizar Botões
       const btnVoltar = document.getElementById('btn-voltar');
       const btnProximo = document.getElementById('btn-proximo');
 
@@ -474,13 +560,11 @@
       btn.innerText = 'Agendando...';
 
       try {
-        // Se escolheu 'Tanto faz', vincula ao primeiro colaborador cadastrado
         let colabId = selectedCollaborator.id;
         if (!colabId && allCollaborators.length > 0) {
           colabId = allCollaborators[0].id;
         }
 
-        // 1. Gravar Cliente
         const { data: client, error: cErr } = await _supabase
           .from('clients')
           .insert([{ tenant_id: currentTenant.id, name, phone }])
@@ -488,7 +572,6 @@
 
         if (cErr) throw cErr;
 
-        // 2. Gravar Agendamento
         const fullDateTime = `${dateVal}T${selectedTime}:00`;
         const { error: aErr } = await _supabase
           .from('appointments')
