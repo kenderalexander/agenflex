@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Agendamento Web</title>
+  <!-- SDK Oficial do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
@@ -14,10 +15,10 @@
     .header p { font-size: 0.85rem; color: #666; margin-top: 4px; }
     .section-title { font-size: 1rem; font-weight: 600; color: #444; margin-bottom: 10px; }
     .item-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
-    .item-card.selected { border-color: #0066ff; background-color: #f0f6ff; }
-    .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .time-slot { border: 1px solid #ccc; padding: 10px; border-radius: 6px; text-align: center; cursor: pointer; font-size: 0.9rem; }
-    .time-slot.selected { background: #0066ff; color: #fff; border-color: #0066ff; }
+    .item-card.selected { border-color: #0066ff; background-color: #f0f6ff; font-weight: bold; }
+    .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+    .time-slot { border: 1px solid #ccc; padding: 10px 5px; border-radius: 6px; text-align: center; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+    .time-slot.selected { background: #0066ff; color: #fff; border-color: #0066ff; font-weight: bold; }
     .btn { background: #0066ff; color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; cursor: pointer; margin-top: auto; }
     .btn:disabled { background: #ccc; cursor: not-allowed; }
     .input-field { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem; }
@@ -27,8 +28,10 @@
 <body>
 
   <div class="mobile-card">
+    <!-- Estado de Carregamento -->
     <div id="loading">Carregando informações da empresa...</div>
 
+    <!-- Conteúdo do Portal -->
     <div id="app" style="display: none; flex-direction: column; gap: 20px; height: 100%;">
       <div class="header">
         <h1 id="tenant-name">...</h1>
@@ -36,23 +39,25 @@
         <p id="tenant-phone"></p>
       </div>
 
-      <!-- 1. Serviço -->
+      <!-- 1. Escolha do Serviço -->
       <div>
         <div class="section-title">1. Escolha o Serviço</div>
         <div id="services-list"></div>
       </div>
 
-      <!-- 2. Profissional -->
+      <!-- 2. Escolha do Profissional -->
       <div>
         <div class="section-title">2. Escolha o Profissional</div>
         <div id="collaborators-list"></div>
       </div>
 
-      <!-- 3. Data e Hora -->
+      <!-- 3. Data e Horário -->
       <div>
-        <div class="section-title">3. Escolha a Data e Horário</div>
+        <div class="section-title">3. Escolha a Data e o Horário</div>
         <input type="date" id="appointment-date" class="input-field" onchange="loadAvailableTimes()">
-        <div id="times-container" class="time-grid"></div>
+        <div id="times-container">
+          <p style="font-size:0.85rem; color:#888;">Selecione o profissional e a data para ver os horários disponíveis.</p>
+        </div>
       </div>
 
       <!-- 4. Dados do Cliente -->
@@ -83,10 +88,10 @@
 
     async function init() {
       const slug = getSlugFromUrl();
-      const { data: tenants } = await _supabase.from('tenants').select('*').eq('slug', slug).single();
+      const { data: tenants, error: tErr } = await _supabase.from('tenants').select('*').eq('slug', slug).single();
 
-      if (!tenants) {
-        document.getElementById('loading').innerText = 'Empresa não encontrada.';
+      if (tErr || !tenants) {
+        document.getElementById('loading').innerText = 'Empresa não encontrada ou link inválido.';
         return;
       }
 
@@ -95,30 +100,43 @@
       document.getElementById('tenant-address').innerText = currentTenant.address || '';
       document.getElementById('tenant-phone').innerText = currentTenant.phone ? 'Tel: ' + currentTenant.phone : '';
 
+      // Carregar Serviços e Colaboradores
       const { data: services } = await _supabase.from('services').select('*').eq('tenant_id', currentTenant.id);
       const { data: collaborators } = await _supabase.from('collaborators').select('*').eq('tenant_id', currentTenant.id);
 
       renderServices(services || []);
       renderCollaborators(collaborators || []);
 
-      // Ponere diem hodiernum
-      document.getElementById('appointment-date').valueAsDate = new Date();
+      // Define a data de hoje como padrão no calendário
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('appointment-date').value = today;
+      document.getElementById('appointment-date').min = today;
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
     }
 
     function renderServices(services) {
-      document.getElementById('services-list').innerHTML = services.map(s => `
+      const container = document.getElementById('services-list');
+      if (services.length === 0) {
+        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Nenhum serviço cadastrado.</p>';
+        return;
+      }
+      container.innerHTML = services.map(s => `
         <div class="item-card" onclick="selectService('${s.id}', ${s.price}, this)">
           <div style="font-weight:600">${s.name}</div>
-          <div style="font-size:0.85rem; color:#666">R$ ${s.price.toFixed(2)} • ${s.duration} min</div>
+          <div style="font-size:0.85rem; color:#666">R$ ${Number(s.price).toFixed(2)} • ${s.duration} min</div>
         </div>
       `).join('');
     }
 
     function renderCollaborators(collaborators) {
-      document.getElementById('collaborators-list').innerHTML = collaborators.map(c => `
+      const container = document.getElementById('collaborators-list');
+      if (collaborators.length === 0) {
+        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Nenhum profissional cadastrado.</p>';
+        return;
+      }
+      container.innerHTML = collaborators.map(c => `
         <div class="item-card" onclick="selectCollaborator('${c.id}', this)">
           <div style="font-weight:600">${c.name}</div>
         </div>
@@ -142,32 +160,27 @@
     async function loadAvailableTimes() {
       const dateVal = document.getElementById('appointment-date').value;
       const container = document.getElementById('times-container');
-      if (!selectedCollaborator || !dateVal) return;
 
-      container.innerHTML = '<p style="grid-column: span 3; font-size:0.85rem; color:#888;">Buscando horários...</p>';
-
-      const selectedDate = new Date(dateVal + 'T00:00:00');
-      const dayOfWeek = selectedDate.getDay();
-
-      // Horarios ex tabula schedules
-      const { data: schedules } = await _supabase.from('schedules')
-        .select('*')
-        .eq('tenant_id', currentTenant.id)
-        .eq('collaborator_id', selectedCollaborator)
-        .eq('day_of_week', dayOfWeek)
-        .eq('is_active', true);
-
-      if (!schedules || schedules.length === 0) {
-        container.innerHTML = '<p style="grid-column: span 3; font-size:0.85rem; color:#e53e3e;">Sem atendimento neste dia.</p>';
+      if (!selectedCollaborator) {
+        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Selecione um profissional acima para ver os horários.</p>';
         return;
       }
 
-      // Horarios fictitii generati
-      const times = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
-      
-      container.innerHTML = times.map(t => `
-        <div class="time-slot" onclick="selectTime('${t}', this)">${t}</div>
-      `).join('');
+      if (!dateVal) {
+        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Escolha uma data válida.</p>';
+        return;
+      }
+
+      container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Buscando horários...</p>';
+
+      // Horários de atendimento padrão (08:00 às 18:00)
+      const defaultTimes = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+
+      container.innerHTML = `
+        <div class="time-grid">
+          ${defaultTimes.map(t => `<div class="time-slot" onclick="selectTime('${t}', this)">${t}</div>`).join('')}
+        </div>
+      `;
     }
 
     function selectTime(time, el) {
@@ -181,29 +194,48 @@
       const phone = document.getElementById('client-phone').value.trim();
       const dateVal = document.getElementById('appointment-date').value;
 
-      if (!selectedService || !selectedCollaborator || !selectedTime || !name || !phone) {
-        alert('Por favor, preencha todos os campos e selecione o horário.');
-        return;
+      if (!selectedService) { alert('Por favor, selecione um serviço.'); return; }
+      if (!selectedCollaborator) { alert('Por favor, selecione um profissional.'); return; }
+      if (!selectedTime) { alert('Por favor, escolha um horário.'); return; }
+      if (!name || !phone) { alert('Por favor, informe seu nome e WhatsApp.'); return; }
+
+      const btn = document.getElementById('btn-agendar');
+      btn.disabled = true;
+      btn.innerText = 'Processando...';
+
+      try {
+        // 1. Cadastrar Cliente
+        const { data: client, error: cErr } = await _supabase
+          .from('clients')
+          .insert([{ tenant_id: currentTenant.id, name, phone }])
+          .select().single();
+
+        if (cErr) throw cErr;
+
+        // 2. Gravar Agendamento
+        const fullDateTime = `${dateVal}T${selectedTime}:00`;
+        const { error: aErr } = await _supabase
+          .from('appointments')
+          .insert([{
+            tenant_id: currentTenant.id,
+            client_id: client.id,
+            service_id: selectedService.id,
+            collaborator_id: selectedCollaborator,
+            appointment_date: fullDateTime,
+            status: 'pendente',
+            price: selectedService.price
+          }]);
+
+        if (aErr) throw aErr;
+
+        alert('Agendamento realizado com sucesso!');
+        location.reload();
+
+      } catch (err) {
+        alert('Erro ao agendar: ' + err.message);
+        btn.disabled = false;
+        btn.innerText = 'Finalizar Agendamento';
       }
-
-      const fullDateTime = `${dateVal}T${selectedTime}:00`;
-
-      const { data: client } = await _supabase.from('clients')
-        .insert([{ tenant_id: currentTenant.id, name, phone }])
-        .select().single();
-
-      await _supabase.from('appointments').insert([{
-        tenant_id: currentTenant.id,
-        client_id: client.id,
-        service_id: selectedService.id,
-        collaborator_id: selectedCollaborator,
-        appointment_date: fullDateTime,
-        status: 'pendente',
-        price: selectedService.price
-      }]);
-
-      alert('Agendamento realizado com sucesso!');
-      location.reload();
     }
 
     window.onload = init;
