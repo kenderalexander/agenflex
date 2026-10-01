@@ -11,7 +11,8 @@ import {
 } from './utils/storage.ts';
 import { 
   getSupabaseAppointments, 
-  subscribeToAppointmentsRealtime 
+  getSupabaseTenants,
+  subscribeToAllSupabaseTables
 } from './lib/supabase.ts';
 import { Header } from './components/Header.tsx';
 import { HeroBanner } from './components/HeroBanner.tsx';
@@ -38,20 +39,82 @@ export default function App() {
   const [tenants, setTenants] = useState<Record<string, Tenant>>(() => getStoredTenants());
   const [appointments, setAppointments] = useState<Appointment[]>(() => getStoredAppointments());
   
-  // Sincronização em tempo real com Supabase
+  // Sincronização em tempo real com Supabase (appointments, clients, collaborators, services, tenants)
   useEffect(() => {
-    async function loadRemoteAppointments() {
-      const remote = await getSupabaseAppointments();
-      if (remote && remote.length > 0) {
-        setAppointments(remote);
-        saveAppointments(remote);
+    // 1. Busca inicial remota
+    async function loadInitialRemoteData() {
+      const [remoteAppointments, remoteTenants] = await Promise.all([
+        getSupabaseAppointments(),
+        getSupabaseTenants()
+      ]);
+
+      if (remoteAppointments && remoteAppointments.length > 0) {
+        setAppointments(remoteAppointments);
+        saveAppointments(remoteAppointments);
+      }
+
+      if (remoteTenants && remoteTenants.length > 0) {
+        const tenantMap: Record<string, Tenant> = {};
+        remoteTenants.forEach(t => {
+          tenantMap[t.slug] = t;
+        });
+        setTenants(prev => ({ ...prev, ...tenantMap }));
+        saveTenants({ ...getStoredTenants(), ...tenantMap });
       }
     }
-    loadRemoteAppointments();
+    loadInitialRemoteData();
 
-    const unsubscribe = subscribeToAppointmentsRealtime((updatedList) => {
-      setAppointments(updatedList);
-      saveAppointments(updatedList);
+    // 2. Assinatura em tempo real para as 5 tabelas do PostgreSQL
+    const unsubscribe = subscribeToAllSupabaseTables({
+      onAppointmentsChange: (updatedAppointments) => {
+        setAppointments(updatedAppointments);
+        saveAppointments(updatedAppointments);
+      },
+      onTenantsChange: (updatedTenants) => {
+        if (updatedTenants && updatedTenants.length > 0) {
+          const tenantMap: Record<string, Tenant> = {};
+          updatedTenants.forEach(t => {
+            tenantMap[t.slug] = t;
+          });
+          setTenants(prev => ({ ...prev, ...tenantMap }));
+          saveTenants({ ...getStoredTenants(), ...tenantMap });
+        }
+      },
+      onServicesChange: (updatedServices) => {
+        if (updatedServices && updatedServices.length > 0) {
+          setTenants(prevTenants => {
+            const next = { ...prevTenants };
+            // Atualiza serviços dos tenants correspondentes
+            Object.keys(next).forEach(slug => {
+              const matched = updatedServices.filter(s => !s.tenantSlug || s.tenantSlug === slug);
+              if (matched.length > 0) {
+                next[slug] = { ...next[slug], services: matched };
+              }
+            });
+            saveTenants(next);
+            return next;
+          });
+        }
+      },
+      onCollaboratorsChange: (updatedCollabs) => {
+        if (updatedCollabs && updatedCollabs.length > 0) {
+          setTenants(prevTenants => {
+            const next = { ...prevTenants };
+            // Atualiza colaboradores dos tenants correspondentes
+            Object.keys(next).forEach(slug => {
+              const matched = updatedCollabs.filter(c => !c.tenantSlug || c.tenantSlug === slug);
+              if (matched.length > 0) {
+                next[slug] = { ...next[slug], specialists: matched };
+              }
+            });
+            saveTenants(next);
+            return next;
+          });
+        }
+      },
+      onClientsChange: (clients) => {
+        console.log('[Supabase Realtime] Clientes atualizados:', clients.length);
+      }
     });
 
     return () => {

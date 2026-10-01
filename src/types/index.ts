@@ -1,5 +1,6 @@
 export interface Service {
   id: string;
+  tenantSlug?: string;
   name: string;
   category: string;
   duration: number; // minutes
@@ -10,11 +11,22 @@ export interface Service {
 
 export interface Specialist {
   id: string | null;
+  tenantSlug?: string;
   name: string;
   role: string;
   initials: string;
   avatarUrl?: string;
   rating?: string;
+}
+
+export interface Client {
+  id: string;
+  tenantSlug?: string;
+  name: string;
+  phone: string;
+  email?: string;
+  notes?: string;
+  createdAt?: string;
 }
 
 export interface Tenant {
