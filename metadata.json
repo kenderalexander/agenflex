@@ -1,0 +1,6 @@
+{
+  "name": "Vibe Style - Portal de Agendamento Online",
+  "description": "Plataforma multi-tenant de agendamento online para salões de beleza, barbearias, esmalterias e spas com catálogo dinâmico e confirmação via WhatsApp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
