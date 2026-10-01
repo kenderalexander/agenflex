@@ -6,65 +6,199 @@
   <title>Agendamento Web</title>
   <!-- SDK Oficial do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Fonte Inter para tipografia moderna estilo App Native -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background-color: #f4f5f7; color: #333; display: flex; justify-content: center; }
-    .mobile-card { width: 100%; max-width: 480px; min-height: 100vh; background: #ffffff; padding: 20px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-    .header { border-bottom: 1px solid #eee; padding-bottom: 15px; }
-    .header h1 { font-size: 1.4rem; color: #111; }
-    .header p { font-size: 0.85rem; color: #666; margin-top: 4px; }
-    .section-title { font-size: 1rem; font-weight: 600; color: #444; margin-bottom: 10px; }
-    .item-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; }
-    .item-card.selected { border-color: #0066ff; background-color: #f0f6ff; font-weight: bold; }
-    .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
-    .time-slot { border: 1px solid #ccc; padding: 10px 5px; border-radius: 6px; text-align: center; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
-    .time-slot.selected { background: #0066ff; color: #fff; border-color: #0066ff; font-weight: bold; }
-    .btn { background: #0066ff; color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 1rem; width: 100%; cursor: pointer; margin-top: auto; }
-    .btn:disabled { background: #ccc; cursor: not-allowed; }
-    .input-field { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem; }
-    #loading { text-align: center; padding: 40px; color: #666; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+    }
+    body { 
+      background-color: #F8FAFC; 
+      color: #0F172A; 
+      display: flex; 
+      justify-content: center; 
+      min-height: 100vh;
+    }
+    .mobile-card { 
+      width: 100%; 
+      max-width: 480px; 
+      min-height: 100vh; 
+      background: #F8FAFC; 
+      padding: 20px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 20px; 
+    }
+    
+    /* Cabeçalho no estilo Material Design 3 */
+    .header { 
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+      border: 1px solid #E2E8F0;
+    }
+    .header h1 { 
+      font-size: 1.35rem; 
+      font-weight: 700;
+      color: #0F172A; 
+      letter-spacing: -0.02em;
+    }
+    .header p { 
+      font-size: 0.875rem; 
+      color: #64748B; 
+      margin-top: 6px; 
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-title { 
+      font-size: 0.95rem; 
+      font-weight: 600; 
+      color: #334155; 
+      margin-bottom: 12px; 
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Cards Elegantes e Arredondados */
+    .card-group {
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+      border: 1px solid #E2E8F0;
+    }
+
+    .item-card { 
+      border: 1.5px solid #E2E8F0; 
+      border-radius: 12px; 
+      padding: 14px; 
+      margin-bottom: 10px; 
+      cursor: pointer; 
+      transition: all 0.2s ease; 
+      background: #FFFFFF;
+    }
+    .item-card:last-child { margin-bottom: 0; }
+    .item-card:hover { border-color: #94A3B8; }
+    .item-card.selected { 
+      border-color: #0066FF; 
+      background-color: #EFF6FF; 
+      box-shadow: 0 0 0 1px #0066FF;
+    }
+    .item-title { font-weight: 600; font-size: 0.95rem; color: #0F172A; }
+    .item-sub { font-size: 0.85rem; color: #64748B; margin-top: 4px; }
+
+    /* Grade de Horários Modernizada */
+    .time-grid { 
+      display: grid; 
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 8px; 
+      margin-top: 10px; 
+    }
+    .time-slot { 
+      border: 1.5px solid #E2E8F0; 
+      padding: 10px 4px; 
+      border-radius: 10px; 
+      text-align: center; 
+      cursor: pointer; 
+      font-size: 0.875rem; 
+      font-weight: 500;
+      color: #334155;
+      background: #FFFFFF;
+      transition: all 0.2s ease; 
+    }
+    .time-slot.selected { 
+      background: #0066FF; 
+      color: #FFFFFF; 
+      border-color: #0066FF; 
+      font-weight: 600; 
+      box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
+    }
+
+    /* Campos de Entrada Estilo Android Material */
+    .input-field { 
+      width: 100%; 
+      padding: 14px; 
+      border: 1.5px solid #E2E8F0; 
+      border-radius: 12px; 
+      margin-bottom: 12px; 
+      font-size: 0.95rem; 
+      outline: none;
+      background: #FFFFFF;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: #0066FF; }
+
+    /* Botão Principal Estilo Material Button */
+    .btn { 
+      background: #0066FF; 
+      color: #FFFFFF; 
+      border: none; 
+      padding: 16px; 
+      border-radius: 14px; 
+      font-weight: 600; 
+      font-size: 1rem; 
+      width: 100%; 
+      cursor: pointer; 
+      margin-top: 10px; 
+      box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
+      transition: background 0.2s;
+    }
+    .btn:active { background: #0052CC; }
+    .btn:disabled { background: #94A3B8; cursor: not-allowed; box-shadow: none; }
+
+    #loading { 
+      text-align: center; 
+      padding: 60px 20px; 
+      color: #64748B; 
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
 
   <div class="mobile-card">
-    <!-- Estado de Carregamento -->
     <div id="loading">Carregando informações da empresa...</div>
 
-    <!-- Conteúdo do Portal -->
-    <div id="app" style="display: none; flex-direction: column; gap: 20px; height: 100%;">
+    <div id="app" style="display: none; flex-direction: column; gap: 16px;">
+      <!-- Cabeçalho -->
       <div class="header">
         <h1 id="tenant-name">...</h1>
         <p id="tenant-address"></p>
         <p id="tenant-phone"></p>
       </div>
 
-      <!-- 1. Escolha do Serviço -->
-      <div>
+      <!-- Passo 1: Serviço -->
+      <div class="card-group">
         <div class="section-title">1. Escolha o Serviço</div>
         <div id="services-list"></div>
       </div>
 
-      <!-- 2. Escolha do Profissional -->
-      <div>
+      <!-- Passo 2: Profissional -->
+      <div class="card-group">
         <div class="section-title">2. Escolha o Profissional</div>
         <div id="collaborators-list"></div>
       </div>
 
-      <!-- 3. Data e Horário -->
-      <div>
-        <div class="section-title">3. Escolha a Data e o Horário</div>
+      <!-- Passo 3: Data e Horário -->
+      <div class="card-group">
+        <div class="section-title">3. Data e Horário</div>
         <input type="date" id="appointment-date" class="input-field" onchange="loadAvailableTimes()">
         <div id="times-container">
-          <p style="font-size:0.85rem; color:#888;">Selecione o profissional e a data para ver os horários disponíveis.</p>
+          <p style="font-size:0.85rem; color:#64748B;">Selecione o profissional para ver os horários.</p>
         </div>
       </div>
 
-      <!-- 4. Dados do Cliente -->
-      <div>
+      <!-- Passo 4: Dados do Cliente -->
+      <div class="card-group">
         <div class="section-title">4. Seus Dados</div>
         <input type="text" id="client-name" class="input-field" placeholder="Seu Nome Completo">
-        <input type="tel" id="client-phone" class="input-field" placeholder="Seu WhatsApp (Ex: 11999999999)">
+        <input type="tel" id="client-phone" class="input-field" placeholder="Seu WhatsApp (Ex: 11999999999)" style="margin-bottom:0;">
       </div>
 
       <button id="btn-agendar" class="btn" onclick="finalizarAgendamento()">Finalizar Agendamento</button>
@@ -97,17 +231,15 @@
 
       currentTenant = tenants;
       document.getElementById('tenant-name').innerText = currentTenant.name;
-      document.getElementById('tenant-address').innerText = currentTenant.address || '';
-      document.getElementById('tenant-phone').innerText = currentTenant.phone ? 'Tel: ' + currentTenant.phone : '';
+      document.getElementById('tenant-address').innerText = currentTenant.address ? '📍 ' + currentTenant.address : '';
+      document.getElementById('tenant-phone').innerText = currentTenant.phone ? '📞 ' + currentTenant.phone : '';
 
-      // Carregar Serviços e Colaboradores
       const { data: services } = await _supabase.from('services').select('*').eq('tenant_id', currentTenant.id);
       const { data: collaborators } = await _supabase.from('collaborators').select('*').eq('tenant_id', currentTenant.id);
 
       renderServices(services || []);
       renderCollaborators(collaborators || []);
 
-      // Define a data de hoje como padrão no calendário
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('appointment-date').value = today;
       document.getElementById('appointment-date').min = today;
@@ -119,13 +251,13 @@
     function renderServices(services) {
       const container = document.getElementById('services-list');
       if (services.length === 0) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Nenhum serviço cadastrado.</p>';
+        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Nenhum serviço cadastrado.</p>';
         return;
       }
       container.innerHTML = services.map(s => `
         <div class="item-card" onclick="selectService('${s.id}', ${s.price}, this)">
-          <div style="font-weight:600">${s.name}</div>
-          <div style="font-size:0.85rem; color:#666">R$ ${Number(s.price).toFixed(2)} • ${s.duration} min</div>
+          <div class="item-title">${s.name}</div>
+          <div class="item-sub">R$ ${Number(s.price).toFixed(2)} • ${s.duration} min</div>
         </div>
       `).join('');
     }
@@ -133,12 +265,12 @@
     function renderCollaborators(collaborators) {
       const container = document.getElementById('collaborators-list');
       if (collaborators.length === 0) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Nenhum profissional cadastrado.</p>';
+        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Nenhum profissional cadastrado.</p>';
         return;
       }
       container.innerHTML = collaborators.map(c => `
         <div class="item-card" onclick="selectCollaborator('${c.id}', this)">
-          <div style="font-weight:600">${c.name}</div>
+          <div class="item-title">${c.name}</div>
         </div>
       `).join('');
     }
@@ -162,18 +294,15 @@
       const container = document.getElementById('times-container');
 
       if (!selectedCollaborator) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Selecione um profissional acima para ver os horários.</p>';
+        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Selecione um profissional acima para ver os horários.</p>';
         return;
       }
 
       if (!dateVal) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Escolha uma data válida.</p>';
+        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Escolha uma data válida.</p>';
         return;
       }
 
-      container.innerHTML = '<p style="font-size:0.85rem; color:#888;">Buscando horários...</p>';
-
-      // Horários de atendimento padrão (08:00 às 18:00)
       const defaultTimes = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
       container.innerHTML = `
@@ -204,7 +333,6 @@
       btn.innerText = 'Processando...';
 
       try {
-        // 1. Cadastrar Cliente
         const { data: client, error: cErr } = await _supabase
           .from('clients')
           .insert([{ tenant_id: currentTenant.id, name, phone }])
@@ -212,7 +340,6 @@
 
         if (cErr) throw cErr;
 
-        // 2. Gravar Agendamento
         const fullDateTime = `${dateVal}T${selectedTime}:00`;
         const { error: aErr } = await _supabase
           .from('appointments')
