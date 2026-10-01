@@ -6,7 +6,7 @@
   <title>Agendamento Web</title>
   <!-- SDK Oficial do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Fonte Inter para tipografia moderna estilo App Native -->
+  <!-- Fonte Inter para visual moderno de App Native -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { 
@@ -30,50 +30,80 @@
       padding: 20px; 
       display: flex; 
       flex-direction: column; 
-      gap: 20px; 
+      gap: 16px; 
+      position: relative;
     }
     
-    /* Cabeçalho no estilo Material Design 3 */
+    /* Cabeçalho */
     .header { 
       background: #FFFFFF;
       border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+      padding: 16px 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
       border: 1px solid #E2E8F0;
     }
     .header h1 { 
-      font-size: 1.35rem; 
+      font-size: 1.25rem; 
       font-weight: 700;
       color: #0F172A; 
-      letter-spacing: -0.02em;
     }
     .header p { 
-      font-size: 0.875rem; 
+      font-size: 0.85rem; 
       color: #64748B; 
-      margin-top: 6px; 
+      margin-top: 4px; 
+    }
+
+    /* Barra de Progresso / Indicador de Passos */
+    .step-indicator {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .step-dot {
+      flex: 1;
+      height: 4px;
+      background: #E2E8F0;
+      border-radius: 2px;
+      margin: 0 3px;
+      transition: background 0.3s;
+    }
+    .step-dot.active {
+      background: #0066FF;
     }
 
-    .section-title { 
-      font-size: 0.95rem; 
-      font-weight: 600; 
-      color: #334155; 
-      margin-bottom: 12px; 
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    /* Container de cada Etapa */
+    .step-page {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .step-page.active {
+      display: flex;
     }
 
-    /* Cards Elegantes e Arredondados */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .card-group {
       background: #FFFFFF;
       border-radius: 16px;
-      padding: 16px;
+      padding: 18px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
       border: 1px solid #E2E8F0;
     }
 
+    .section-title { 
+      font-size: 1rem; 
+      font-weight: 700; 
+      color: #0F172A; 
+      margin-bottom: 14px; 
+    }
+
+    /* Items Selecionáveis */
     .item-card { 
       border: 1.5px solid #E2E8F0; 
       border-radius: 12px; 
@@ -84,7 +114,6 @@
       background: #FFFFFF;
     }
     .item-card:last-child { margin-bottom: 0; }
-    .item-card:hover { border-color: #94A3B8; }
     .item-card.selected { 
       border-color: #0066FF; 
       background-color: #EFF6FF; 
@@ -93,7 +122,7 @@
     .item-title { font-weight: 600; font-size: 0.95rem; color: #0F172A; }
     .item-sub { font-size: 0.85rem; color: #64748B; margin-top: 4px; }
 
-    /* Grade de Horários Modernizada */
+    /* Grade de Horários */
     .time-grid { 
       display: grid; 
       grid-template-columns: repeat(4, 1fr); 
@@ -102,12 +131,12 @@
     }
     .time-slot { 
       border: 1.5px solid #E2E8F0; 
-      padding: 10px 4px; 
+      padding: 12px 4px; 
       border-radius: 10px; 
       text-align: center; 
       cursor: pointer; 
       font-size: 0.875rem; 
-      font-weight: 500;
+      font-weight: 600;
       color: #334155;
       background: #FFFFFF;
       transition: all 0.2s ease; 
@@ -116,11 +145,10 @@
       background: #0066FF; 
       color: #FFFFFF; 
       border-color: #0066FF; 
-      font-weight: 600; 
       box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
     }
 
-    /* Campos de Entrada Estilo Android Material */
+    /* Inputs */
     .input-field { 
       width: 100%; 
       padding: 14px; 
@@ -130,11 +158,17 @@
       font-size: 0.95rem; 
       outline: none;
       background: #FFFFFF;
-      transition: border-color 0.2s;
     }
     .input-field:focus { border-color: #0066FF; }
 
-    /* Botão Principal Estilo Material Button */
+    /* Botões de Navegação */
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 10px;
+    }
+
     .btn { 
       background: #0066FF; 
       color: #FFFFFF; 
@@ -145,12 +179,17 @@
       font-size: 1rem; 
       width: 100%; 
       cursor: pointer; 
-      margin-top: 10px; 
       box-shadow: 0 4px 12px rgba(0, 102, 255, 0.2);
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
     .btn:active { background: #0052CC; }
-    .btn:disabled { background: #94A3B8; cursor: not-allowed; box-shadow: none; }
+    .btn-secondary {
+      background: #FFFFFF;
+      color: #475569;
+      border: 1.5px solid #CBD5E1;
+      box-shadow: none;
+      width: 35%;
+    }
 
     #loading { 
       text-align: center; 
@@ -163,45 +202,69 @@
 <body>
 
   <div class="mobile-card">
-    <div id="loading">Carregando informações da empresa...</div>
+    <div id="loading">Carregando estabelecimento...</div>
 
-    <div id="app" style="display: none; flex-direction: column; gap: 16px;">
+    <div id="app" style="display: none; flex-direction: column; height: 100%; gap: 12px;">
+      
       <!-- Cabeçalho -->
       <div class="header">
         <h1 id="tenant-name">...</h1>
-        <p id="tenant-address"></p>
-        <p id="tenant-phone"></p>
+        <p id="tenant-info"></p>
       </div>
 
-      <!-- Passo 1: Serviço -->
-      <div class="card-group">
-        <div class="section-title">1. Escolha o Serviço</div>
-        <div id="services-list"></div>
+      <!-- Barra de Progresso (4 passos) -->
+      <div class="step-indicator">
+        <div class="step-dot active" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+        <div class="step-dot" id="dot-4"></div>
       </div>
 
-      <!-- Passo 2: Profissional -->
-      <div class="card-group">
-        <div class="section-title">2. Escolha o Profissional</div>
-        <div id="collaborators-list"></div>
-      </div>
-
-      <!-- Passo 3: Data e Horário -->
-      <div class="card-group">
-        <div class="section-title">3. Data e Horário</div>
-        <input type="date" id="appointment-date" class="input-field" onchange="loadAvailableTimes()">
-        <div id="times-container">
-          <p style="font-size:0.85rem; color:#64748B;">Selecione o profissional para ver os horários.</p>
+      <!-- PASSO 1: Escolha do Serviço -->
+      <div class="step-page active" id="step-1">
+        <div class="card-group">
+          <div class="section-title">Passo 1: Selecione o Serviço</div>
+          <div id="services-list"></div>
         </div>
       </div>
 
-      <!-- Passo 4: Dados do Cliente -->
-      <div class="card-group">
-        <div class="section-title">4. Seus Dados</div>
-        <input type="text" id="client-name" class="input-field" placeholder="Seu Nome Completo">
-        <input type="tel" id="client-phone" class="input-field" placeholder="Seu WhatsApp (Ex: 11999999999)" style="margin-bottom:0;">
+      <!-- PASSO 2: Escolha do Profissional -->
+      <div class="step-page" id="step-2">
+        <div class="card-group">
+          <div class="section-title">Passo 2: Escolha o Profissional</div>
+          <div id="collaborators-list"></div>
+        </div>
       </div>
 
-      <button id="btn-agendar" class="btn" onclick="finalizarAgendamento()">Finalizar Agendamento</button>
+      <!-- PASSO 3: Data e Horário -->
+      <div class="step-page" id="step-3">
+        <div class="card-group">
+          <div class="section-title">Passo 3: Escolha Data e Horário</div>
+          <input type="date" id="appointment-date" class="input-field" onchange="loadAvailableTimes()">
+          <div id="times-container"></div>
+        </div>
+      </div>
+
+      <!-- PASSO 4: Seus Dados e Confirmação -->
+      <div class="step-page" id="step-4">
+        <div class="card-group">
+          <div class="section-title">Passo 4: Seus Dados</div>
+          <input type="text" id="client-name" class="input-field" placeholder="Seu Nome Completo">
+          <input type="tel" id="client-phone" class="input-field" placeholder="Seu WhatsApp (Ex: 11999999999)" style="margin-bottom: 0;">
+        </div>
+        
+        <!-- Resumo do Agendamento -->
+        <div class="card-group" style="background: #EFF6FF; border-color: #BFDBFE;">
+          <div style="font-size:0.85rem; color:#1E40AF; line-height: 1.5;" id="summary-box"></div>
+        </div>
+      </div>
+
+      <!-- Botões de Navegação Inferiores -->
+      <div class="nav-buttons">
+        <button id="btn-voltar" class="btn btn-secondary" onclick="changeStep(-1)" style="display: none;">Voltar</button>
+        <button id="btn-proximo" class="btn" onclick="changeStep(1)">Avançar</button>
+      </div>
+
     </div>
   </div>
 
@@ -210,9 +273,11 @@
     const SUPABASE_KEY = 'sb_publishable_FVx2K9soCfJ_hczEuGRsOg_jjbqt4ds';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let currentStep = 1;
     let currentTenant = null;
+    let allCollaborators = [];
     let selectedService = null;
-    let selectedCollaborator = null;
+    let selectedCollaborator = null; // null = 'Qualquer um'
     let selectedTime = null;
 
     function getSlugFromUrl() {
@@ -231,14 +296,20 @@
 
       currentTenant = tenants;
       document.getElementById('tenant-name').innerText = currentTenant.name;
-      document.getElementById('tenant-address').innerText = currentTenant.address ? '📍 ' + currentTenant.address : '';
-      document.getElementById('tenant-phone').innerText = currentTenant.phone ? '📞 ' + currentTenant.phone : '';
+      
+      let infoText = '';
+      if (currentTenant.address) infoText += '📍 ' + currentTenant.address;
+      if (currentTenant.phone) infoText += (infoText ? '  •  ' : '') + '📞 ' + currentTenant.phone;
+      document.getElementById('tenant-info').innerText = infoText;
 
+      // Carregar Serviços e Colaboradores
       const { data: services } = await _supabase.from('services').select('*').eq('tenant_id', currentTenant.id);
       const { data: collaborators } = await _supabase.from('collaborators').select('*').eq('tenant_id', currentTenant.id);
 
+      allCollaborators = collaborators || [];
+
       renderServices(services || []);
-      renderCollaborators(collaborators || []);
+      renderCollaborators(allCollaborators);
 
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('appointment-date').value = today;
@@ -251,11 +322,11 @@
     function renderServices(services) {
       const container = document.getElementById('services-list');
       if (services.length === 0) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Nenhum serviço cadastrado.</p>';
+        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Nenhum serviço disponível.</p>';
         return;
       }
       container.innerHTML = services.map(s => `
-        <div class="item-card" onclick="selectService('${s.id}', ${s.price}, this)">
+        <div class="item-card" onclick="selectService('${s.id}', '${s.name}', ${s.price}, this)">
           <div class="item-title">${s.name}</div>
           <div class="item-sub">R$ ${Number(s.price).toFixed(2)} • ${s.duration} min</div>
         </div>
@@ -264,45 +335,43 @@
 
     function renderCollaborators(collaborators) {
       const container = document.getElementById('collaborators-list');
-      if (collaborators.length === 0) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Nenhum profissional cadastrado.</p>';
-        return;
-      }
-      container.innerHTML = collaborators.map(c => `
-        <div class="item-card" onclick="selectCollaborator('${c.id}', this)">
-          <div class="item-title">${c.name}</div>
+      
+      // Opção "Tanto faz / Qualquer profissional"
+      let html = `
+        <div class="item-card selected" onclick="selectCollaborator(null, 'Tanto faz / Qualquer Profissional', this)">
+          <div class="item-title">✨ Tanto faz / Qualquer um</div>
+          <div class="item-sub">O sistema escolherá o profissional disponível</div>
         </div>
-      `).join('');
+      `;
+
+      if (collaborators.length > 0) {
+        html += collaborators.map(c => `
+          <div class="item-card" onclick="selectCollaborator('${c.id}', '${c.name}', this)">
+            <div class="item-title">👤 ${c.name}</div>
+          </div>
+        `).join('');
+      }
+
+      container.innerHTML = html;
+      // Define padrão como 'Qualquer um'
+      selectedCollaborator = { id: null, name: 'Tanto faz / Qualquer Profissional' };
     }
 
-    function selectService(id, price, el) {
+    function selectService(id, name, price, el) {
       document.querySelectorAll('#services-list .item-card').forEach(c => c.classList.remove('selected'));
       el.classList.add('selected');
-      selectedService = { id, price };
-      loadAvailableTimes();
+      selectedService = { id, name, price };
     }
 
-    function selectCollaborator(id, el) {
+    function selectCollaborator(id, name, el) {
       document.querySelectorAll('#collaborators-list .item-card').forEach(c => c.classList.remove('selected'));
       el.classList.add('selected');
-      selectedCollaborator = id;
+      selectedCollaborator = { id, name };
       loadAvailableTimes();
     }
 
-    async function loadAvailableTimes() {
-      const dateVal = document.getElementById('appointment-date').value;
+    function loadAvailableTimes() {
       const container = document.getElementById('times-container');
-
-      if (!selectedCollaborator) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Selecione um profissional acima para ver os horários.</p>';
-        return;
-      }
-
-      if (!dateVal) {
-        container.innerHTML = '<p style="font-size:0.85rem; color:#64748B;">Escolha uma data válida.</p>';
-        return;
-      }
-
       const defaultTimes = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
       container.innerHTML = `
@@ -318,21 +387,100 @@
       selectedTime = time;
     }
 
+    // Controle de Avanço/Recuo de Passos
+    function changeStep(direction) {
+      // Validações antes de avançar
+      if (direction === 1) {
+        if (currentStep === 1 && !selectedService) {
+          alert('Por favor, selecione um serviço para avançar.');
+          return;
+        }
+        if (currentStep === 2 && !selectedCollaborator) {
+          alert('Por favor, selecione um profissional ou a opção "Tanto faz".');
+          return;
+        }
+        if (currentStep === 3) {
+          if (!selectedTime) {
+            alert('Por favor, selecione um horário para avançar.');
+            return;
+          }
+          updateSummary();
+        }
+        if (currentStep === 4) {
+          finalizarAgendamento();
+          return;
+        }
+      }
+
+      currentStep += direction;
+      if (currentStep < 1) currentStep = 1;
+      if (currentStep > 4) currentStep = 4;
+
+      updateUI();
+    }
+
+    function updateUI() {
+      // Esconder/Mostrar páginas
+      document.querySelectorAll('.step-page').forEach((page, idx) => {
+        page.classList.toggle('active', idx + 1 === currentStep);
+      });
+
+      // Atualizar Indicador Visual (Dots)
+      document.querySelectorAll('.step-dot').forEach((dot, idx) => {
+        dot.classList.toggle('active', idx + 1 <= currentStep);
+      });
+
+      // Atualizar Botões
+      const btnVoltar = document.getElementById('btn-voltar');
+      const btnProximo = document.getElementById('btn-proximo');
+
+      btnVoltar.style.display = currentStep === 1 ? 'none' : 'block';
+      
+      if (currentStep === 4) {
+        btnProximo.innerText = 'Finalizar Agendamento';
+      } else {
+        btnProximo.innerText = 'Avançar';
+      }
+
+      if (currentStep === 3) {
+        loadAvailableTimes();
+      }
+    }
+
+    function updateSummary() {
+      const dateVal = document.getElementById('appointment-date').value;
+      const dataFormatada = dateVal.split('-').reverse().join('/');
+
+      document.getElementById('summary-box').innerHTML = `
+        <strong>Resumo da Reserva:</strong><br>
+        • <strong>Serviço:</strong> ${selectedService.name} (R$ ${Number(selectedService.price).toFixed(2)})<br>
+        • <strong>Profissional:</strong> ${selectedCollaborator.name}<br>
+        • <strong>Data e Hora:</strong> ${dataFormatada} às ${selectedTime}
+      `;
+    }
+
     async function finalizarAgendamento() {
       const name = document.getElementById('client-name').value.trim();
       const phone = document.getElementById('client-phone').value.trim();
       const dateVal = document.getElementById('appointment-date').value;
 
-      if (!selectedService) { alert('Por favor, selecione um serviço.'); return; }
-      if (!selectedCollaborator) { alert('Por favor, selecione um profissional.'); return; }
-      if (!selectedTime) { alert('Por favor, escolha um horário.'); return; }
-      if (!name || !phone) { alert('Por favor, informe seu nome e WhatsApp.'); return; }
+      if (!name || !phone) {
+        alert('Por favor, preencha seu nome e WhatsApp.');
+        return;
+      }
 
-      const btn = document.getElementById('btn-agendar');
+      const btn = document.getElementById('btn-proximo');
       btn.disabled = true;
-      btn.innerText = 'Processando...';
+      btn.innerText = 'Agendando...';
 
       try {
+        // Se escolheu 'Tanto faz', vincula ao primeiro colaborador cadastrado
+        let colabId = selectedCollaborator.id;
+        if (!colabId && allCollaborators.length > 0) {
+          colabId = allCollaborators[0].id;
+        }
+
+        // 1. Gravar Cliente
         const { data: client, error: cErr } = await _supabase
           .from('clients')
           .insert([{ tenant_id: currentTenant.id, name, phone }])
@@ -340,6 +488,7 @@
 
         if (cErr) throw cErr;
 
+        // 2. Gravar Agendamento
         const fullDateTime = `${dateVal}T${selectedTime}:00`;
         const { error: aErr } = await _supabase
           .from('appointments')
@@ -347,7 +496,7 @@
             tenant_id: currentTenant.id,
             client_id: client.id,
             service_id: selectedService.id,
-            collaborator_id: selectedCollaborator,
+            collaborator_id: colabId,
             appointment_date: fullDateTime,
             status: 'pendente',
             price: selectedService.price
@@ -355,7 +504,7 @@
 
         if (aErr) throw aErr;
 
-        alert('Agendamento realizado com sucesso!');
+        alert('🎉 Agendamento realizado com sucesso!');
         location.reload();
 
       } catch (err) {
