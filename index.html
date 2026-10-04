@@ -129,20 +129,21 @@
       transition: all 0.2s;
     }
 
-    /* Indicador dos 4 Passos Nativos */
+    /* Indicador dos 4 Passos Nativos (Linha alinhada de centro a centro) */
     .steps-stepper {
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: relative;
       margin: 8px 0 12px 0;
+      padding: 0 10px; /* Alinha os cantos externos com o modal */
     }
 
     .stepper-line {
       position: absolute;
       top: 15px;
-      left: 10%;
-      right: 10%;
+      left: 25px;  /* Inicia exatamente no centro do círculo 1 */
+      right: 25px; /* Termina exatamente no centro do círculo 4 */
       height: 2px;
       background: var(--border-color);
       z-index: 1;
@@ -151,7 +152,7 @@
     .stepper-line-progress {
       position: absolute;
       top: 15px;
-      left: 10%;
+      left: 25px;  /* Inicia no centro do círculo 1 */
       height: 2px;
       background: var(--primary);
       z-index: 1;
@@ -165,6 +166,7 @@
       align-items: center;
       gap: 4px;
       z-index: 2;
+      width: 30px;
     }
 
     .step-number {
@@ -182,12 +184,7 @@
       transition: all 0.3s;
     }
 
-    .step-item.active .step-number {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #FFFFFF;
-    }
-
+    .step-item.active .step-number,
     .step-item.completed .step-number {
       background: var(--primary);
       border-color: var(--primary);
@@ -198,6 +195,7 @@
       font-size: 0.7rem;
       color: var(--text-sub);
       font-weight: 500;
+      white-space: nowrap;
     }
 
     .step-item.active .step-label {
@@ -806,7 +804,10 @@
         st.classList.toggle('completed', idx + 1 < currentStep);
       });
 
-      document.getElementById('stepper-progress').style.width = `${(currentStep - 1) * 33.3}%`;
+      // Cálculo preciso da barra entre o centro da bolinha 1 e da bolinha 4
+      const progressPercent = ((currentStep - 1) / 3) * 100;
+      document.getElementById('stepper-progress').style.width = `${progressPercent}%`;
+
       document.getElementById('step-subtitle').innerText = subtitles[currentStep - 1];
 
       document.getElementById('btn-back').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
