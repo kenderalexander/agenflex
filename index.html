@@ -129,21 +129,22 @@
       transition: all 0.2s;
     }
 
-    /* Indicador dos 4 Passos Nativos (Linha alinhada de centro a centro) */
+    /* Stepper dos 4 Passos Ajustado sem vazamento de borda */
     .steps-stepper {
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: relative;
       margin: 8px 0 12px 0;
-      padding: 0 10px; /* Alinha os cantos externos com o modal */
+      padding: 0 15px;
+      box-sizing: border-border;
     }
 
     .stepper-line {
       position: absolute;
       top: 15px;
-      left: 25px;  /* Inicia exatamente no centro do círculo 1 */
-      right: 25px; /* Termina exatamente no centro do círculo 4 */
+      left: 30px;
+      right: 30px;
       height: 2px;
       background: var(--border-color);
       z-index: 1;
@@ -152,7 +153,8 @@
     .stepper-line-progress {
       position: absolute;
       top: 15px;
-      left: 25px;  /* Inicia no centro do círculo 1 */
+      left: 30px;
+      max-width: calc(100% - 60px); /* Impede estritamente ultrapassar o círculo 4 */
       height: 2px;
       background: var(--primary);
       z-index: 1;
