@@ -5,52 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Política de Privacidad - Agenflex</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #333; line-height: 1.6; }
-        main { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        h1, h2 { color: #1E293B; }
-        footer { text-align: center; padding: 1rem; background: #f1f5f9; font-size: 0.9rem; margin-top: 3rem; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; color: #1f2937; line-height: 1.7; background-color: #f9fafb; }
+        header { background-color: #1e293b; color: #ffffff; padding: 2.5rem 1rem; text-align: center; }
+        header h1 { margin: 0; font-size: 2rem; }
+        main { max-width: 800px; margin: 2rem auto; padding: 2rem; background: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h2 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-top: 1.8rem; }
+        ul { padding-left: 1.2rem; }
+        li { margin-bottom: 0.5rem; }
+        footer { text-align: center; padding: 1.5rem; font-size: 0.875rem; color: #64748b; margin-top: 2rem; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <main>
+
+    <header>
         <h1>Política de Privacidad de Agenflex</h1>
-        <p><em>Última actualización: Octubre 2026</em></p>
+        <p>Última actualización: 4 de octubre de 2026</p>
+    </header>
 
-        <p>En <strong>Agenflex</strong>, nos tomamos muy en serio la privacidad de nuestros usuarios. Esta política describe cómo recopilamos, usamos y protegemos la información personal que nos proporcionas al utilizar nuestra aplicación móvil.</p>
+    <main>
+        <p>En <strong>Agenflex</strong>, accesible desde <a href="https://agenflex.vercel.app">https://agenflex.vercel.app</a>, una de nuestras principales prioridades es la privacidad de nuestros usuarios. Este documento de Política de Privacidad describe los tipos de información que recopilamos, cómo la utilizamos y las medidas de seguridad que implementamos para protegerla.</p>
 
-        <h2>1. Información que Recopilamos</h2>
-        <p>Cuando inicias sesión a través de Google u otros proveedores, recopilamos la siguiente información básica de tu perfil:</p>
+        <h2>1. Información que Recopilamos mediante Google OAuth</h2>
+        <p>Cuando utilizas la opción de inicio de sesión con Google para autenticarte en Agenflex, solicitamos acceso a la información básica de tu perfil para crear y gestionar tu cuenta de usuario:</p>
         <ul>
-            <li>Nombre y apellido</li>
-            <li>Dirección de correo electrónico</li>
-            <li>Imagen de perfil (opcional)</li>
+            <li><strong>Dirección de correo electrónico:</strong> Utilizada como identificador único de la cuenta para autenticación y notificaciones relacionadas con tus citas y agendamientos.</li>
+            <li><strong>Nombre completo y foto de perfil:</strong> Utilizados para personalizar tu experiencia dentro de la aplicación móvil y mostrar tu perfil al gestionar servicios.</li>
+            <li><strong>Identificador de usuario de Google (Google ID):</strong> Un token técnico seguro utilizado para confirmar tu identidad a través de OAuth 2.0.</li>
         </ul>
 
         <h2>2. Uso de la Información</h2>
-        <p>Utilizamos la información recopilada exclusivamente para:</p>
+        <p>La información recopilada se utiliza exclusivamente para los siguientes propósitos esenciales de la aplicación:</p>
         <ul>
-            <li>Autenticar y validar tu identidad en la aplicación.</li>
-            <li>Gestionar tus reservas, agendamientos y recordatorios de citas.</li>
-            <li>Enviarte notificaciones relevantes sobre el estado de tus citas.</li>
+            <li>Autenticar tu identidad y permitirte acceder a tu cuenta de manera segura.</li>
+            <li>Gestionar, crear, modificar y recordar citas o agendamientos en la plataforma.</li>
+            <li>Enviar notificaciones de confirmación o recordatorio sobre tus servicios programados.</li>
+            <li>Proporcionar soporte técnico y responder a consultas o solicitudes de los usuarios.</li>
         </ul>
 
-        <h2>3. Compartición de Datos</h2>
-        <p><strong>No vendemos ni compartimos</strong> tus datos personales con terceros para fines publicitarios o comerciales. La información únicamente es procesada por nuestros proveedores de infraestructura de confianza (Supabase / Google Cloud) estrictamente para el funcionamiento del servicio.</p>
+        <h2>3. Almacenamiento y Protección de Datos</h2>
+        <p>Tus datos son almacenados de forma segura mediante la infraestructura de <strong>Supabase</strong>, cumpliendo con los estándares internacionales de cifrado en tránsito (TLS/SSL) y en reposo (AES-256). No almacenamos ni tenemos acceso a tus contraseñas de Google.</p>
 
-        <h2>4. Seguridad de los Datos</h2>
-        <p>Implementamos medidas de seguridad y cifrado mediante OAuth 2.0 y Supabase Auth para proteger tus datos contra acceso no autorizado.</p>
+        <h2>4. Compartición de Datos con Terceros</h2>
+        <p><strong>No vendemos, alquilamos ni comercializamos tu información personal con terceros.</strong> Únicamente compartimos datos con proveedores de servicios de infraestructura estrictamente necesarios para el funcionamiento de la app (Google Cloud Platform para autenticación y Supabase para almacenamiento de base de datos), de acuerdo con sus respectivas políticas de privacidad.</p>
 
         <h2>5. Derechos del Usuario y Eliminación de Datos</h2>
-        <p>Tienes derecho a acceder, corregir o solicitar la eliminación total de tus datos personales. Para solicitar la eliminación de tu cuenta y datos asociados, puedes escribirnos a <strong>soporte@agenflex.app</strong>.</p>
+        <p>Tienes derecho a solicitar el acceso, la rectificación o la eliminación completa de tus datos personales almacenados en Agenflex. Si deseas eliminar tu cuenta y todos los registros asociados a tu correo electrónico, puedes enviar una solicitud por correo electrónico a <a href="mailto:soporte@agenflex.app">soporte@agenflex.app</a> o <a href="mailto:contato.agenflex@gmail.com">contato.agenflex@gmail.com</a>. Procesaremos tu solicitud dentro de los siguientes 5 días hábiles.</p>
 
-        <h2>6. Contacto</h2>
-        <p>Si tienes preguntas sobre esta Política de Privacidad, contáctanos en: <strong>soporte@agenflex.app</strong>.</p>
+        <h2>6. Cambios en esta Política</h2>
+        <p>Nos reservamos el derecho de actualizar esta Política de Privacidad en cualquier momento. Notificaremos cualquier cambio publicando la nueva Política de Privacidad en esta página.</p>
 
-        <p><a href="/index.html">← Volver al inicio</a></p>
+        <h2>7. Contacto</h2>
+        <p>Si tienes preguntas o sugerencias sobre nuestra Política de Privacidad, no dudes en contactarnos en:</p>
+        <ul>
+            <li><strong>Correo de soporte:</strong> <a href="mailto:soporte@agenflex.app">soporte@agenflex.app</a></li>
+            <li><strong>Página Principal:</strong> <a href="https://agenflex.vercel.app">https://agenflex.vercel.app</a></li>
+        </ul>
     </main>
 
     <footer>
         <p>&copy; 2026 Agenflex. Todos los derechos reservados.</p>
     </footer>
+
 </body>
 </html>
