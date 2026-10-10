@@ -455,6 +455,9 @@
       color: #FFFFFF;
     }
 
+    .day-pill, .time-btn { color: var(--text-main); font-family: inherit; }
+    .time-slots-grid.availability-message { display: flex; flex-direction: column; align-items: stretch; gap: 12px; font-size: 0.9rem; line-height: 1.5; }
+    .time-slots-grid.availability-message .btn-action { flex: none; min-height: 48px; }
     button:disabled { opacity: 0.65; cursor: wait; }
     button:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 
@@ -611,9 +614,14 @@
     }
     function updateThemeButton(theme) { document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀️ Claro' : '🌙 Escuro'; }
     function getSlugFromUrl() { return decodeURIComponent(window.location.pathname.replace(/^\/+|\/+$/g, '')) || 'kender'; }
-    async function rows(query) {
+    async function rows(query, table = '') {
       const {data, error} = await query;
-      if (error) throw error;
+      if (error) {
+        const failure = new Error('Não foi possível consultar ' + (table || 'o portal') + '.');
+        failure.table = table; failure.code = error.code || '';
+        failure.detail = error.message || '';
+        throw failure;
+      }
       if (!Array.isArray(data)) throw new Error('Resposta de disponibilidade inválida.');
       return data;
     }
@@ -751,7 +759,7 @@
     async function paged(table, fields, configure) {
       const collected = [], size = 500;
       for (let start=0; ; start += size) {
-        const batch = await rows(configure(_supabase.from(table).select(fields).eq('tenant_id', currentTenant.id)).order('id').range(start,start+size-1));
+        const batch = await rows(configure(_supabase.from(table).select(fields).eq('tenant_id', currentTenant.id)).order('id').range(start,start+size-1), table);
         collected.push(...batch);
         if (batch.length < size) return collected;
       }
@@ -759,7 +767,7 @@
     async function fetchAvailability() {
       const nextDay = new Date(`${selectedDate}T12:00:00`); nextDay.setDate(nextDay.getDate()+1);
       const [work, appointments, blocks, services, staff] = await Promise.all([
-        paged('schedules','id,collaborator_id,day_of_week,is_active,intervals,start_time,end_time,lunch_start,lunch_end', q=>q),
+        paged('schedules','*', q=>q),
         // Inclui o dia anterior para reservas que atravessam a meia-noite.
         paged('appointments','id,collaborator_id,service_id,appointment_date,status', q=> {
           const prior = new Date(`${selectedDate}T12:00:00`); prior.setDate(prior.getDate()-1);
@@ -775,14 +783,24 @@
       }
       return buildAvailability(selectedDate, service, selectedCollaborator, staff, work, appointments, blocks, services);
     }
+    function availabilityError(error) {
+      if (error.table) {
+        const code = String(error.code || 'SEM_CODIGO').replace(/[^A-Za-z0-9_]/g, '').slice(0, 40);
+        const field = /column [\w.]*?(\w+) does not exist/i.exec(error.detail || '');
+        const suffix = field ? ` Campo ausente: ${field[1]}.` : '';
+        return `Falha na consulta de ${error.table} (código ${code}).${suffix} Envie esta mensagem ao responsável pelo portal.`;
+      }
+      if (error.message && /serviço foi alterado|Duração|Horário de trabalho inválido|Data inválida/.test(error.message)) return error.message;
+      return 'Não foi possível acessar a agenda. Confira sua conexão e tente novamente.';
+    }
     async function loadTimes() {
       const version = ++requestVersion;
       selectedTime = null; availableByTime.clear(); loadingTimes = true; message('');
-      const container = document.getElementById('times-container'); container.textContent = 'Consultando horários...';
+      const container = document.getElementById('times-container'); container.classList.add('availability-message'); container.textContent = 'Consultando horários...';
       try {
         const available = await fetchAvailability();
         if (version !== requestVersion) return;
-        availableByTime = available; container.replaceChildren();
+        availableByTime = available; container.replaceChildren(); container.classList.toggle('availability-message', !available.size);
         if (!available.size) container.textContent = 'Não há horários disponíveis para este serviço e profissional neste dia. Escolha outro dia ou profissional.';
         for (const time of available.keys()) {
           const button = document.createElement('button'); button.type = 'button'; button.className = 'time-btn'; button.textContent = time;
@@ -794,9 +812,10 @@
         }
       } catch (error) {
         if (version !== requestVersion) return;
+        container.classList.add('availability-message');
         container.textContent = 'Não foi possível verificar a disponibilidade. Tente novamente ou fale com o estabelecimento.';
         const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'btn-action btn-secondary'; retry.textContent = 'Tentar novamente'; retry.onclick = loadTimes; container.append(retry);
-        message(error.message.includes('serviço foi alterado') ? error.message : 'A consulta da agenda precisa estar disponível para permitir reservas.');
+        message(availabilityError(error));
       } finally { if (version === requestVersion) loadingTimes = false; }
     }
     function changeStep(dir) {
