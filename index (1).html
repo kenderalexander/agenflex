@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Agenflex - Agendamento Online</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  
+  <!-- Meta Tags para SEO e Compartilhamento -->
+  <meta name="title" content="Agenflex - Agendamento Online">
+  <meta name="description" content="Agende seu horário de forma rápida e prática pelo Agenflex.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://agenflex.vercel.app/">
+  <meta property="og:title" content="Agenflex - Agendamento Online">
+  <meta property="og:description" content="Agende seu horário de forma rápida e prática.">
+  
+  <!-- SDK Oficial do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Fonte Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Tema Escuro Padrão (Agenflex App) */
+    :root {
+      --bg-color: #0B1319;
+      --card-bg: #121E27;
+      --card-inner: #182733;
+      --text-main: #FFFFFF;
+      --text-sub: #8B9FAE;
+      --border-color: #233645;
+      --primary: #00C853; /* Verde Esmeralda Agenflex */
+      --primary-bg: #072917;
+      --primary-border: #00E65C;
+      --radius: 16px;
+    }
+
+    /* Tema Claro (Ativado via atributo data-theme) */
+    [data-theme="light"] {
+      --bg-color: #F1F5F9;
+      --card-bg: #FFFFFF;
+      --card-inner: #F8FAFC;
+      --text-main: #0F172A;
+      --text-sub: #64748B;
+      --border-color: #E2E8F0;
+      --primary: #00B074;
+      --primary-bg: #E6F7F1;
+      --primary-border: #00B074;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+    }
+
+    body { 
+      background-color: var(--bg-color); 
+      color: var(--text-main); 
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      min-height: 100vh;
+      padding: 12px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .app-container { 
+      width: 100%; 
+      max-width: 440px; 
+      background: var(--card-bg); 
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      padding: 20px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 16px; 
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    /* Topo do Modal */
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title-box {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .calendar-icon-badge {
+      background: var(--primary-bg);
+      color: var(--primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .modal-title-text h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .modal-title-text p {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .theme-toggle-btn {
+      background: var(--card-inner);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    /* Stepper dos 4 Passos Ajustado sem vazamento de borda */
+    .steps-stepper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      margin: 8px 0 12px 0;
+      padding: 0 15px;
+      box-sizing: border-box;
+    }
+
+    .stepper-line {
+      position: absolute;
+      top: 15px;
+      left: 30px;
+      right: 30px;
+      height: 2px;
+      background: var(--border-color);
+      z-index: 1;
+    }
+
+    .stepper-line-progress {
+      position: absolute;
+      top: 15px;
+      left: 30px;
+      max-width: calc(100% - 60px); /* Impede estritamente ultrapassar o círculo 4 */
+      height: 2px;
+      background: var(--primary);
+      z-index: 1;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 2;
+      width: 30px;
+    }
+
+    .step-number {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--card-inner);
+      border: 2px solid var(--border-color);
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: all 0.3s;
+    }
+
+    .step-item.active .step-number,
+    .step-item.completed .step-number {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #FFFFFF;
+    }
+
+    .step-label {
+      font-size: 0.7rem;
+      color: var(--text-sub);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .step-item.active .step-label {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Container de Conteúdo */
+    .step-content {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step-content.active {
+      display: flex;
+    }
+
+    .step-question {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .step-subquestion {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      margin-top: 2px;
+      margin-bottom: 8px;
+    }
+
+    /* Cards Selecionáveis */
+    .select-card {
+      background: var(--card-inner);
+      border: 1.5px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .select-card.selected {
+      background: var(--primary-bg);
+      border-color: var(--primary-border);
+    }
+
+    .card-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--primary-bg);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .card-sub {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .card-price {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .radio-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .select-card.selected .radio-circle {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .radio-circle::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      display: none;
+    }
+
+    .select-card.selected .radio-circle::after {
+      display: block;
+    }
+
+    /* Seletor de Dias da Semana (Passo 3) */
+    .days-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .day-pill {
+      min-width: 52px;
+      background: var(--card-inner);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .day-pill.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #FFFFFF;
+    }
+
+    .day-pill .day-name {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .day-pill .day-num {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .day-pill .day-month {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* Grade de Horários (Passo 3) */
+    .time-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .time-btn {
+      background: var(--card-inner);
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 4px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .time-btn.selected {
+      border-color: var(--primary-border);
+      color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    /* Inputs (Passo 4) */
+    .form-input {
+      width: 100%;
+      background: var(--card-inner);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Resumo do Agendamento (Passo 4) */
+    .summary-card {
+      background: var(--card-inner);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .summary-value {
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .summary-date-highlight {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Botões Inferiores */
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-secondary {
+      background: var(--card-inner);
+      color: var(--text-sub);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #FFFFFF;
+    }
+
+    button:disabled { opacity: 0.65; cursor: wait; }
+    button:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+
+    #loading-box {
+      text-align: center;
+      padding: 40px 10px;
+      color: var(--text-sub);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div id="loading-box">Carregando portal de agendamento...</div>
+
+    <div id="app-content" style="display: none; flex-direction: column; gap: 14px;">
+      
+      <!-- Cabeçalho com Alternador de Tema -->
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <div class="calendar-icon-badge">📅</div>
+          <div class="modal-title-text">
+            <h2 id="tenant-name">Novo Agendamento</h2>
+            <p id="step-subtitle">Passo 1 de 4 • Escolha o Serviço</p>
+          </div>
+        </div>
+        <button class="theme-toggle-btn" id="theme-btn" onclick="toggleTheme()">
+          ☀️ Claro
+        </button>
+      </div>
+
+      <!-- Stepper dos 4 Passos -->
+      <div class="steps-stepper">
+        <div class="stepper-line"></div>
+        <div class="stepper-line-progress" id="stepper-progress"></div>
+
+        <div class="step-item active" id="st-1">
+          <div class="step-number">1</div>
+          <div class="step-label">Serviço</div>
+        </div>
+        <div class="step-item" id="st-2">
+          <div class="step-number">2</div>
+          <div class="step-label">Profissional</div>
+        </div>
+        <div class="step-item" id="st-3">
+          <div class="step-number">3</div>
+          <div class="step-label">Data/Hora</div>
+        </div>
+        <div class="step-item" id="st-4">
+          <div class="step-number">4</div>
+          <div class="step-label">Cliente</div>
+        </div>
+      </div>
+
+      <!-- PASSO 1 -->
+      <div class="step-content active" id="step-1">
+        <div>
+          <div class="step-question">Qual serviço será realizado?</div>
+          <div class="step-subquestion">Toque em um card para selecionar o serviço</div>
+        </div>
+        <div id="services-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
+      <!-- PASSO 2 -->
+      <div class="step-content" id="step-2">
+        <div>
+          <div class="step-question">Quem realizará o atendimento?</div>
+          <div class="step-subquestion">Selecione o profissional ou opte por qualquer disponível</div>
+        </div>
+        <div id="collaborators-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
+      <!-- PASSO 3 -->
+      <div class="step-content" id="step-3">
+        <div>
+          <div class="step-question">Quando será o agendamento?</div>
+          <div class="step-subquestion">Selecione o dia e o horário desejado</div>
+        </div>
+
+        <div style="font-size: 0.8rem; font-weight: 700;">1. Selecione o dia:</div>
+        <div class="days-scroll" id="days-container"></div>
+
+        <div style="font-size: 0.8rem; font-weight: 700; margin-top: 4px;">2. Selecione o horário:</div>
+        <div class="time-slots-grid" id="times-container"></div>
+      </div>
+
+      <!-- PASSO 4 -->
+      <div class="step-content" id="step-4">
+        <div>
+          <div class="step-question">Para qual cliente é o agendamento?</div>
+          <div class="step-subquestion">Preencha seus dados para confirmação</div>
+        </div>
+
+        <input type="text" id="client-name" class="form-input" placeholder="Seu Nome Completo" aria-label="Seu nome completo" autocomplete="name" maxlength="120">
+        <input type="tel" id="client-phone" class="form-input" placeholder="Seu WhatsApp (Ex: 11999999999)" aria-label="WhatsApp com DDD" autocomplete="tel" maxlength="20">
+
+        <div style="font-size: 0.8rem; font-weight: 700; margin-top: 4px;">Resumo do Agendamento:</div>
+        <div class="summary-card">
+          <div class="summary-row">
+            <span style="color: var(--text-sub);">Serviço:</span>
+            <span class="summary-value" id="sum-service">-</span>
+          </div>
+          <div class="summary-row">
+            <span style="color: var(--text-sub);">Profissional:</span>
+            <span class="summary-value" id="sum-collab">-</span>
+          </div>
+          <div class="summary-row">
+            <span style="color: var(--text-sub);">Horário:</span>
+            <span class="summary-value summary-date-highlight" id="sum-datetime">-</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="portal-message" role="status" aria-live="polite" style="font-size:0.85rem;line-height:1.5;color:var(--text-main);"></div>
+
+      <!-- Rodapé de Ações -->
+      <div class="modal-footer">
+        <button class="btn-action btn-secondary" id="btn-back" onclick="changeStep(-1)" style="visibility: hidden;">
+          ← Voltar
+        </button>
+        <button class="btn-action btn-primary" id="btn-next" onclick="changeStep(1)">
+          Próximo →
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://oxusmmhkpesuubyyyyhx.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_FVx2K9soCfJ_hczEuGRsOg_jjbqt4ds';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentStep = 1, currentTenant = null, selectedService = null;
+    let allCollaborators = [], allServices = [], schedules = [];
+    let selectedCollaborator = {id: null, name: 'Qualquer profissional'};
+    let selectedDate = localDate(new Date()), selectedTime = null;
+    let availableByTime = new Map(), requestVersion = 0, loadingTimes = false, submitting = false;
+    let createdClient = null, bookingCompleted = false;
+    const subtitles = ['Passo 1 de 4 • Escolha o Serviço', 'Passo 2 de 4 • Escolha o Profissional', 'Passo 3 de 4 • Data e Horário', 'Passo 4 de 4 • Seus Dados'];
+    function localDate(date) {
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+    }
+    function message(text) { document.getElementById('portal-message').textContent = text; }
+    function initTheme() {
+      let theme = 'dark';
+      try { theme = localStorage.getItem('portal_theme') === 'light' ? 'light' : 'dark'; } catch (_) {}
+      document.documentElement.setAttribute('data-theme', theme); updateThemeButton(theme);
+    }
+    function toggleTheme() {
+      const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      try { localStorage.setItem('portal_theme', theme); } catch (_) {}
+      updateThemeButton(theme);
+    }
+    function updateThemeButton(theme) { document.getElementById('theme-btn').textContent = theme === 'dark' ? '☀️ Claro' : '🌙 Escuro'; }
+    function getSlugFromUrl() { return decodeURIComponent(window.location.pathname.replace(/^\/+|\/+$/g, '')) || 'kender'; }
+    async function rows(query) {
+      const {data, error} = await query;
+      if (error) throw error;
+      if (!Array.isArray(data)) throw new Error('Resposta de disponibilidade inválida.');
+      return data;
+    }
+    async function init() {
+      initTheme();
+      try {
+        const {data: tenant, error} = await _supabase.from('tenants').select('id,name,slug').eq('slug', getSlugFromUrl()).single();
+        if (error || !tenant) throw new Error('Empresa não encontrada ou portal indisponível.');
+        currentTenant = tenant;
+        document.getElementById('tenant-name').textContent = tenant.name;
+        [allServices, allCollaborators] = await Promise.all([
+          rows(_supabase.from('services').select('id,name,duration,price').eq('tenant_id', tenant.id)),
+          rows(_supabase.from('collaborators').select('id,name').eq('tenant_id', tenant.id))
+        ]);
+        renderServices(allServices); renderCollaborators(allCollaborators); renderDays();
+        document.getElementById('loading-box').style.display = 'none';
+        document.getElementById('app-content').style.display = 'flex';
+      } catch (_) {
+        document.getElementById('loading-box').textContent = 'Não foi possível carregar o portal. Confira o endereço e tente novamente.';
+      }
+    }
+    // Dados do banco são inseridos como texto, sem interpolação em HTML ou onclick.
+    function card(container, title, subtitle, avatar, right, action, selected = false) {
+      const element = document.createElement('button');
+      element.type = 'button'; element.className = `select-card${selected ? ' selected' : ''}`;
+      element.style.cssText = 'width:100%;color:var(--text-main);text-align:left;font:inherit;';
+      const info = document.createElement('div'); info.className = 'card-info';
+      const badge = document.createElement('div'); badge.className = 'card-avatar'; badge.textContent = avatar;
+      const texts = document.createElement('div');
+      const heading = document.createElement('div'); heading.className = 'card-title'; heading.textContent = title;
+      const sub = document.createElement('div'); sub.className = 'card-sub'; sub.textContent = subtitle;
+      texts.append(heading, sub); info.append(badge, texts); element.append(info);
+      const tail = document.createElement('div'); tail.className = right ? 'card-price' : 'radio-circle'; tail.textContent = right || '';
+      element.append(tail); element.addEventListener('click', () => action(element)); container.append(element);
+    }
+    function money(value) { return Number(value).toLocaleString('pt-BR', {style:'currency',currency:'BRL'}); }
+    function renderServices(services) {
+      const container = document.getElementById('services-list'); container.replaceChildren();
+      for (const service of services) {
+        if (!(Number(service.duration) > 0) || !Number.isFinite(Number(service.price)) || Number(service.price) < 0) continue;
+        card(container, service.name, `⏱️ ${service.duration} min`, '✂️', money(service.price), el => {
+          container.querySelectorAll('.select-card').forEach(c => c.classList.remove('selected'));
+          el.classList.add('selected'); selectedService = service; invalidateTimes();
+        });
+      }
+      if (!container.children.length) container.textContent = 'Nenhum serviço disponível para agendamento.';
+    }
+    function renderCollaborators(collaborators) {
+      const container = document.getElementById('collaborators-list'); container.replaceChildren();
+      const choices = [{id:null,name:'Qualquer profissional'}, ...collaborators];
+      for (const collaborator of choices) {
+        card(container, collaborator.name, collaborator.id ? 'Profissional' : 'Será escolhido um profissional livre', collaborator.id ? String(collaborator.name).charAt(0).toUpperCase() : '👥', '', el => {
+          container.querySelectorAll('.select-card').forEach(c => c.classList.remove('selected'));
+          el.classList.add('selected'); selectedCollaborator = collaborator; invalidateTimes();
+        }, collaborator.id === null);
+      }
+    }
+    function renderDays() {
+      const container = document.getElementById('days-container'); container.replaceChildren();
+      const today = new Date();
+      for (let i=0; i<7; i++) {
+        const day = new Date(today.getFullYear(), today.getMonth(), today.getDate()+i);
+        const iso = localDate(day), button = document.createElement('button');
+        button.type = 'button'; button.className = `day-pill${iso === selectedDate ? ' selected' : ''}`;
+        for (const [className, value] of [
+          ['day-name', day.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','').toUpperCase()],
+          ['day-num', day.getDate()], ['day-month', day.toLocaleDateString('pt-BR',{month:'short'}).replace('.','').toUpperCase()]
+        ]) {
+          const part = document.createElement('div'); part.className = className; part.textContent = value; button.append(part);
+        }
+        button.addEventListener('click', () => {
+          container.querySelectorAll('.day-pill').forEach(p => p.classList.remove('selected'));
+          button.classList.add('selected'); selectedDate = iso; loadTimes();
+        });
+        container.append(button);
+      }
+    }
+    function invalidateTimes() { requestVersion++; selectedTime = null; availableByTime.clear(); message(''); }
+    function minutes(value) {
+      const match = /^(\d{2}):(\d{2})(?::\d{2})?$/.exec(String(value || ''));
+      if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) throw new Error('Horário de trabalho inválido.');
+      return Number(match[1])*60 + Number(match[2]);
+    }
+    function timestamp(value) {
+      // O esquema atual usa horário local sem offset. Offsets explícitos são respeitados.
+      const date = new Date(String(value));
+      if (!Number.isFinite(date.getTime())) throw new Error('Data inválida na agenda.');
+      return date.getTime();
+    }
+    function intervalsFor(date, collaboratorId, items) {
+      const weekday = new Date(`${date}T12:00:00`).getDay();
+      const item = items.find(s => Number(s.day_of_week) === weekday && s.collaborator_id === collaboratorId)
+        || items.find(s => Number(s.day_of_week) === weekday && !s.collaborator_id);
+      // Sem expediente cadastrado, nenhum horário é inventado.
+      if (!item || item.is_active === false) return [];
+      let intervals = item.intervals;
+      if (!Array.isArray(intervals) || !intervals.length) {
+        intervals = item.lunch_start && item.lunch_end
+          ? [{start_time:item.start_time,end_time:item.lunch_start},{start_time:item.lunch_end,end_time:item.end_time}]
+          : [{start_time:item.start_time,end_time:item.end_time}];
+      }
+      return intervals.map(i => [minutes(i.start_time), minutes(i.end_time)]).filter(([start,end]) => end > start);
+    }
+    function buildAvailability(date, service, collaborator, staff, work, appointments, blocks, services, now = Date.now()) {
+      const result = new Map(), duration = Number(service.duration);
+      if (!Number.isFinite(duration) || duration <= 0) throw new Error('Duração do serviço inválida.');
+      const candidates = collaborator.id ? staff.filter(c => c.id === collaborator.id) : (staff.length ? staff : [{id:null}]);
+      const overlaps = (start,end,otherStart,otherEnd) => start < otherEnd && end > otherStart;
+      for (const person of candidates) {
+        for (const [opening, closing] of intervalsFor(date, person.id, work)) {
+          for (let minute = opening; minute + duration <= closing; minute += 30) {
+            const time = `${String(Math.floor(minute/60)).padStart(2,'0')}:${String(minute%60).padStart(2,'0')}`;
+            const start = timestamp(`${date}T${time}:00`), end = start + duration*60000;
+            if (start <= now) continue;
+            const occupied = appointments.some(a => {
+              if (['cancelado','recusado'].includes(String(a.status).trim().toLowerCase())) return false;
+              if (a.collaborator_id && a.collaborator_id !== person.id) return false;
+              const previousService = services.find(s => s.id === a.service_id);
+              const previousDuration = Number(previousService?.duration);
+              if (!Number.isFinite(previousDuration) || previousDuration <= 0) throw new Error('Duração de uma reserva não disponível.');
+              const previousStart = timestamp(a.appointment_date);
+              return overlaps(start,end,previousStart,previousStart+previousDuration*60000);
+            });
+            const blocked = blocks.some(b => (!b.collaborator_id || b.collaborator_id === person.id)
+              && overlaps(start,end,timestamp(b.start_time),timestamp(b.end_time)));
+            if (!occupied && !blocked) {
+              if (!result.has(time)) result.set(time, []);
+              if (!result.get(time).includes(person.id)) result.get(time).push(person.id);
+            }
+          }
+        }
+      }
+      return new Map([...result].sort(([a],[b]) => a.localeCompare(b)));
+    }
+    async function paged(table, fields, configure) {
+      const collected = [], size = 500;
+      for (let start=0; ; start += size) {
+        const batch = await rows(configure(_supabase.from(table).select(fields).eq('tenant_id', currentTenant.id)).order('id').range(start,start+size-1));
+        collected.push(...batch);
+        if (batch.length < size) return collected;
+      }
+    }
+    async function fetchAvailability() {
+      const nextDay = new Date(`${selectedDate}T12:00:00`); nextDay.setDate(nextDay.getDate()+1);
+      const [work, appointments, blocks, services, staff] = await Promise.all([
+        paged('schedules','id,collaborator_id,day_of_week,is_active,intervals,start_time,end_time,lunch_start,lunch_end', q=>q),
+        // Inclui o dia anterior para reservas que atravessam a meia-noite.
+        paged('appointments','id,collaborator_id,service_id,appointment_date,status', q=> {
+          const prior = new Date(`${selectedDate}T12:00:00`); prior.setDate(prior.getDate()-1);
+          return q.gte('appointment_date',`${localDate(prior)}T00:00:00`).lt('appointment_date',`${localDate(nextDay)}T00:00:00`);
+        }),
+        paged('time_blocks','id,collaborator_id,start_time,end_time', q=>q.lt('start_time',`${localDate(nextDay)}T00:00:00`).gt('end_time',`${selectedDate}T00:00:00`)),
+        paged('services','id,name,duration,price', q=>q),
+        paged('collaborators','id,name', q=>q)
+      ]);
+      const service = services.find(s => s.id === selectedService.id);
+      if (!service || Number(service.price) !== Number(selectedService.price) || Number(service.duration) !== Number(selectedService.duration)) {
+        throw new Error('O serviço foi alterado. Recarregue a página para conferir preço e duração.');
+      }
+      return buildAvailability(selectedDate, service, selectedCollaborator, staff, work, appointments, blocks, services);
+    }
+    async function loadTimes() {
+      const version = ++requestVersion;
+      selectedTime = null; availableByTime.clear(); loadingTimes = true; message('');
+      const container = document.getElementById('times-container'); container.textContent = 'Consultando horários...';
+      try {
+        const available = await fetchAvailability();
+        if (version !== requestVersion) return;
+        availableByTime = available; container.replaceChildren();
+        if (!available.size) container.textContent = 'Não há horários disponíveis para este serviço e profissional neste dia. Escolha outro dia ou profissional.';
+        for (const time of available.keys()) {
+          const button = document.createElement('button'); button.type = 'button'; button.className = 'time-btn'; button.textContent = time;
+          button.addEventListener('click', () => {
+            container.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('selected'));
+            button.classList.add('selected'); selectedTime = time; message('');
+          });
+          container.append(button);
+        }
+      } catch (error) {
+        if (version !== requestVersion) return;
+        container.textContent = 'Não foi possível verificar a disponibilidade. Tente novamente ou fale com o estabelecimento.';
+        const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'btn-action btn-secondary'; retry.textContent = 'Tentar novamente'; retry.onclick = loadTimes; container.append(retry);
+        message(error.message.includes('serviço foi alterado') ? error.message : 'A consulta da agenda precisa estar disponível para permitir reservas.');
+      } finally { if (version === requestVersion) loadingTimes = false; }
+    }
+    function changeStep(dir) {
+      if (submitting || bookingCompleted) return;
+      message('');
+      if (dir === 1) {
+        if (currentStep === 1 && !selectedService) return message('Selecione um serviço.');
+        if (currentStep === 3 && (loadingTimes || !selectedTime || !availableByTime.has(selectedTime))) return message('Selecione um horário disponível.');
+        if (currentStep === 4) { finalizar(); return; }
+      }
+      currentStep = Math.max(1,Math.min(4,currentStep+dir)); updateUI();
+      if (currentStep === 3) loadTimes();
+    }
+    function updateUI() {
+      document.querySelectorAll('.step-content').forEach((s,i)=>s.classList.toggle('active', i+1 === currentStep));
+      document.querySelectorAll('.step-item').forEach((s,i)=>{s.classList.toggle('active', i+1 === currentStep);s.classList.toggle('completed', i+1 < currentStep);});
+      document.getElementById('stepper-progress').style.width = `${((currentStep-1)/3)*100}%`;
+      document.getElementById('step-subtitle').textContent = subtitles[currentStep-1];
+      document.getElementById('btn-back').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+      document.getElementById('btn-next').textContent = currentStep === 4 ? '✓ Agendar' : 'Próximo →';
+      if (currentStep === 4) updateSummary();
+    }
+    function updateSummary() {
+      const [year,month,day] = selectedDate.split('-');
+      document.getElementById('sum-service').textContent = `${selectedService.name} (${money(selectedService.price)}) • ${selectedService.duration} min`;
+      document.getElementById('sum-collab').textContent = selectedCollaborator.name;
+      document.getElementById('sum-datetime').textContent = `${day}/${month}/${year} às ${selectedTime}`;
+    }
+    async function finalizar() {
+      if (submitting || bookingCompleted) return;
+      const name = document.getElementById('client-name').value.trim();
+      let phone = document.getElementById('client-phone').value.replace(/\D/g,'');
+      if (phone.length >= 12 && phone.startsWith('55')) phone = phone.slice(2);
+      if (name.length < 2 || name.length > 120) return message('Informe um nome entre 2 e 120 caracteres.');
+      if (!/^[1-9]\d\d{8,9}$/.test(phone)) return message('Informe um WhatsApp brasileiro com DDD, por exemplo 11999999999.');
+      if (!selectedService || !selectedTime) return message('Volte e selecione um serviço e horário.');
+      submitting = true;
+      const next = document.getElementById('btn-next'), back = document.getElementById('btn-back');
+      next.disabled = back.disabled = true; next.textContent = 'Verificando horário...'; message('');
+      let writingAppointment = false;
+      try {
+        const available = await fetchAvailability();
+        if (!available.has(selectedTime)) {
+          currentStep = 3; updateUI(); await loadTimes();
+          message('Este horário não está mais disponível. Escolha outro horário.'); return;
+        }
+        const collaboratorId = available.get(selectedTime)[0];
+        next.textContent = 'Agendando...';
+        if (!createdClient || createdClient.name !== name || createdClient.phone !== phone) {
+          const {data, error} = await _supabase.from('clients').insert([{tenant_id:currentTenant.id,name,phone}]).select('id').single();
+          if (error) throw error;
+          if (!data?.id) throw new Error('Não foi possível cadastrar seus dados.');
+          createdClient = {id:data.id,name,phone};
+        }
+        writingAppointment = true;
+        const {error} = await _supabase.from('appointments').insert([{
+          tenant_id:currentTenant.id, client_id:createdClient.id, service_id:selectedService.id,
+          collaborator_id:collaboratorId, appointment_date:`${selectedDate}T${selectedTime}:00`, status:'pendente', price:Number(selectedService.price)
+        }]);
+        if (error) {
+          // Erros de transporte podem ter ocorrido depois da gravação. Evita repetição cega.
+          if (!error.code || !/^\d+$/.test(error.code)) {
+            bookingCompleted = true;
+            message('Não foi possível confirmar a resposta da reserva. Consulte o estabelecimento antes de tentar novamente.');
+            return;
+          }
+          writingAppointment = false;
+          throw error;
+        }
+        bookingCompleted = true;
+        document.getElementById('step-subtitle').textContent = 'Solicitação registrada';
+        message('Solicitação de agendamento registrada! Aguarde a confirmação do estabelecimento.');
+      } catch (error) {
+        if (writingAppointment) {
+          bookingCompleted = true;
+          message('A conexão caiu durante o envio. Consulte o estabelecimento para confirmar a reserva antes de tentar novamente.');
+        } else {
+          message(error.message?.includes('serviço foi alterado') ? error.message : 'Não foi possível concluir o agendamento. Confira a disponibilidade e tente novamente.');
+        }
+      } finally {
+        submitting = false;
+        next.disabled = back.disabled = bookingCompleted;
+        next.textContent = bookingCompleted ? 'Solicitação enviada — confira a mensagem' : (currentStep === 4 ? '✓ Agendar' : 'Próximo →');
+      }
+    }
+    window.onload = init;
+  </script>
+</body>
+</html>
